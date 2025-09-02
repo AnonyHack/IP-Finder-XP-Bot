@@ -136,15 +136,17 @@ async def main():
         port = int(os.environ.get("PORT", 1000))
         
         try:
-            await app.bot.set_webhook(
+            await app.set_webhook(
                 url=webhook_url,
-                drop_pending_updates=True
+                drop_pending_updates=True,
+                allowed_updates=["message", "callback_query"]
             )
             logger.info(f"Webhook set to: {webhook_url}")
         except Exception as e:
             logger.error(f"Failed to set webhook: {e}")
             await app.stop()
             return
+
         
         # Start Flask server
         from waitress import serve
