@@ -1,8 +1,8 @@
 # main.py
 import logging
-import asyncio
 import os
-from aiohttp import web
+import asyncio
+from flask import Flask, request, jsonify
 from pyrogram import Client
 
 # Import config and handlers
@@ -48,22 +48,24 @@ app = Client(
     bot_token=config.con.BOT_TOKEN
 )
 
-# ---------------- Webhook Handlers ---------------- #
-async def handle_webhook(request):
-    """Handle incoming webhook updates"""
+# Flask app for webhook
+flask_app = Flask(__name__)
+
+@flask_app.route(f'/{config.con.BOT_TOKEN}', methods=['POST'])
+def handle_webhook():
     try:
-        data = await request.json()
-        await app.process_update(data)
-        return web.Response(status=200)
+        data = request.get_json()
+        # Process update asynchronously
+        asyncio.create_task(app.process_update(data))
+        return jsonify({'status': 'ok'}), 200
     except Exception as e:
         logger.error(f"Webhook error: {e}")
-        return web.Response(status=500)
+        return jsonify({'error': str(e)}), 500
 
-async def health_check(request):
-    """Health check endpoint"""
-    return web.Response(text="OK")
+@flask_app.route('/')
+def health_check():
+    return 'OK'
 
-# ---------------- Register Handlers Function ---------------- #
 def register_all_handlers():
     """Register all bot handlers"""
     register_force_join_handlers(app)
@@ -85,7 +87,6 @@ def register_all_handlers():
     register_policy_handler(app)
     register_admin_help_handler(app)
 
-# ---------------- Async Main ---------------- #
 async def main():
     # Register all handlers
     register_all_handlers()
@@ -116,31 +117,16 @@ async def main():
             await app.stop()
             return
         
-        # Start web server
-        server = web.Application()
-        server.router.add_post(f"/{config.con.BOT_TOKEN}", handle_webhook)
-        server.router.add_get("/", health_check)
-        
-        runner = web.AppRunner(server)
-        await runner.setup()
-        site = web.TCPSite(runner, "0.0.0.0", port)
-        await site.start()
-        
-        logger.info(f"Web server started on port {port}")
-        await asyncio.Event().wait()
+        # Start Flask server
+        from waitress import serve
+        logger.info(f"Starting Flask server on port {port}")
+        serve(flask_app, host="0.0.0.0", port=port)
         
     else:
         logger.info("🤖 Running in Polling mode locally...")
-        # For local development, use idle pattern
-        await idle()
-
-async def idle():
-    """Keep the bot running until interrupted"""
-    while True:
-        await asyncio.sleep(3600)
+        # For local development, keep running
+        await asyncio.Event().wait()
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("Bot stopped by user")
+    # Run the async main function
+    asyncio.run(main())
