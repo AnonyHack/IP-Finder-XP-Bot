@@ -1,17 +1,17 @@
-# Use the official Python image as the base image
-FROM python:3.12-slim
+# Use Python 3.10 (can change to 3.11 if you prefer)
+FROM python:3.10-slim
 
-# Set the working directory inside the container
+# Set working directory inside container
 WORKDIR /app
 
-# Copy the requirements.txt file to the working directory
-COPY requirements.txt .
+# Copy all files into the container
+COPY . .
 
-# Install the dependencies
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the main.py file to the working directory
-COPY main.py .
+# Set environment variable to ensure output is not buffered
+ENV PYTHONUNBUFFERED=1
 
-# Run the main.py script
+# Run the bot
 CMD ["python", "main.py"]
