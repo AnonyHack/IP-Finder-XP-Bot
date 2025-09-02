@@ -2,28 +2,41 @@
 import logging
 import os
 import asyncio
+import sys
 from flask import Flask, request, jsonify
 from pyrogram import Client
 
+# Add current directory to Python path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 # Import config and handlers
-import config
-import pymongo
-from Admins.stats import register_stats_handler
-from Admins.premium import register_premium_commands
-from XP_TOOLS.start import register_start_handler
-from XP_TOOLS.ip_scanner import register_ip_scanner
-from XP_TOOLS.inline_scanner import register_inline_scanner
-from XP_TOOLS.account import register_account_handler
-from XP_TOOLS.leaderboard import register_leaderboard_handler
-from XP_TOOLS.contact import register_contactus_handler
-from Admins.gift import register_gift_commands
-from Admins.userinfo import register_userinfo_command
-from Admins.broadcast import register_broadcast_command
-from Admins.user_management import register_user_management_commands
-from Admins.maintenance import register_maintenance_commands
-from XP_TOOLS.policy import register_policy_handler
-from Admins.admin_help import register_admin_help_handler
-from force_join import register_force_join_handlers, is_user_member, ask_user_to_join
+try:
+    import config
+except ImportError:
+    # Try relative import
+    from . import config
+
+try:
+    import pymongo
+    from Admins.stats import register_stats_handler
+    from Admins.premium import register_premium_commands
+    from XP_TOOLS.start import register_start_handler
+    from XP_TOOLS.ip_scanner import register_ip_scanner
+    from XP_TOOLS.inline_scanner import register_inline_scanner
+    from XP_TOOLS.account import register_account_handler
+    from XP_TOOLS.leaderboard import register_leaderboard_handler
+    from XP_TOOLS.contact import register_contactus_handler
+    from Admins.gift import register_gift_commands
+    from Admins.userinfo import register_userinfo_command
+    from Admins.broadcast import register_broadcast_command
+    from Admins.user_management import register_user_management_commands
+    from Admins.maintenance import register_maintenance_commands
+    from XP_TOOLS.policy import register_policy_handler
+    from Admins.admin_help import register_admin_help_handler
+    from force_join import register_force_join_handlers, is_user_member, ask_user_to_join
+except ImportError as e:
+    logging.error(f"Import error: {e}")
+    raise
 
 logging.basicConfig(
     level=logging.INFO,
