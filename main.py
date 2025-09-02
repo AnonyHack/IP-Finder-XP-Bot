@@ -11,10 +11,10 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Import config and handlers
 try:
-    import config
-except ImportError:
-    # Try relative import
-    from . import config
+    from config import con  # Import the config instance directly
+except ImportError as e:
+    logging.error(f"Failed to import config: {e}")
+    raise
 
 try:
     import pymongo
@@ -46,9 +46,9 @@ logger = logging.getLogger(__name__)
 
 # MongoDB setup
 try:
-    mongo_client = pymongo.MongoClient(config.con.MONGO_URI)
-    db = mongo_client[config.con.MONGO_DB]
-    users_collection = db[config.con.USERS_COLLECTION]
+    mongo_client = pymongo.MongoClient(con.MONGO_URI)  # Use con directly
+    db = mongo_client[con.MONGO_DB]
+    users_collection = db[con.USERS_COLLECTION]
 except Exception as e:
     logger.error(f"Error connecting to MongoDB: {e}")
     raise e
@@ -56,15 +56,15 @@ except Exception as e:
 # Initialize bot
 app = Client(
     "IP_BOT",
-    api_id=config.con.API_ID,
-    api_hash=config.con.API_HASH,
-    bot_token=config.con.BOT_TOKEN
+    api_id=con.API_ID,  # Use con directly
+    api_hash=con.API_HASH,
+    bot_token=con.BOT_TOKEN
 )
 
 # Flask app for webhook
 flask_app = Flask(__name__)
 
-@flask_app.route(f'/{config.con.BOT_TOKEN}', methods=['POST'])
+@flask_app.route(f'/{con.BOT_TOKEN}', methods=['POST'])  # Use con directly
 def handle_webhook():
     try:
         data = request.get_json()
@@ -91,12 +91,12 @@ def register_all_handlers():
 
     # Admin handlers
     register_stats_handler(app)
-    register_premium_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-    register_gift_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-    register_userinfo_command(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-    register_broadcast_command(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-    register_user_management_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-    register_maintenance_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
+    register_premium_commands(app, db, ADMIN_IDS=con.ADMIN_USER_IDS)  # Use con directly
+    register_gift_commands(app, db, ADMIN_IDS=con.ADMIN_USER_IDS)
+    register_userinfo_command(app, db, ADMIN_IDS=con.ADMIN_USER_IDS)
+    register_broadcast_command(app, db, ADMIN_IDS=con.ADMIN_USER_IDS)
+    register_user_management_commands(app, db, ADMIN_IDS=con.ADMIN_USER_IDS)
+    register_maintenance_commands(app, db, ADMIN_IDS=con.ADMIN_USER_IDS)
     register_policy_handler(app)
     register_admin_help_handler(app)
 
@@ -116,7 +116,7 @@ async def main():
         
         # Get Render's external hostname
         webhook_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')
-        webhook_url = f"https://{webhook_host}/{config.con.BOT_TOKEN}"
+        webhook_url = f"https://{webhook_host}/{con.BOT_TOKEN}"  # Use con directly
         port = int(os.environ.get("PORT", 1000))
         
         try:
