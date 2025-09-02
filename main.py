@@ -6,16 +6,32 @@ import sys
 from flask import Flask, request, jsonify
 from pyrogram import Client
 
+# Load configuration from environment variables
+class Config:
+    def __init__(self):
+        self.API_ID = int(os.getenv("API_ID", "25753873"))
+        self.API_HASH = os.getenv("API_HASH", "3a5cdc2079cd76af80586102bd9761e2")
+        self.BOT_TOKEN = os.getenv("BOT_TOKEN", "8243504414:AAGdCRSYTg_nG-ZQq02voxj3mrxXNadwtXQ")
+        self.IP_API = os.getenv("ACCESS_TOKEN", "2bf134b73f3948")
+        self.MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://anonymousguywas:12345Trials@cluster0.t4nmrtp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+        self.MONGO_DB = os.getenv("MONGO_DB", "ipfinderbot")
+        self.USERS_COLLECTION = os.getenv("USERS_COLLECTION", "users")
+        self.ADMIN_USER_IDS = [int(x) for x in os.getenv("ADMIN_USER_IDS", "5962658076").split(",")]
+        self.BOT_URL = os.getenv("BOT_URL", "https://t.me/IpTrackerxpbot")
+        self.SCANS_LIMIT = 5
+        self.PREMIUM_SCANS = 50
+        
+        self.REQUIRED_CHANNELS = [
+            {"label": "📢 Main Channel", "url": "https://t.me/Megahubbots", "chat": "@Megahubbots"},
+        ]
+
+# Create config instance
+con = Config()
+
 # Add current directory to Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Import config and handlers
-try:
-    from config import con  # Import the config instance directly
-except ImportError as e:
-    logging.error(f"Failed to import config: {e}")
-    raise
-
+# Import handlers
 try:
     import pymongo
     from Admins.stats import register_stats_handler
@@ -46,7 +62,7 @@ logger = logging.getLogger(__name__)
 
 # MongoDB setup
 try:
-    mongo_client = pymongo.MongoClient(con.MONGO_URI)  # Use con directly
+    mongo_client = pymongo.MongoClient(con.MONGO_URI)
     db = mongo_client[con.MONGO_DB]
     users_collection = db[con.USERS_COLLECTION]
 except Exception as e:
@@ -56,7 +72,7 @@ except Exception as e:
 # Initialize bot
 app = Client(
     "IP_BOT",
-    api_id=con.API_ID,  # Use con directly
+    api_id=con.API_ID,
     api_hash=con.API_HASH,
     bot_token=con.BOT_TOKEN
 )
@@ -64,7 +80,7 @@ app = Client(
 # Flask app for webhook
 flask_app = Flask(__name__)
 
-@flask_app.route(f'/{con.BOT_TOKEN}', methods=['POST'])  # Use con directly
+@flask_app.route(f'/{con.BOT_TOKEN}', methods=['POST'])
 def handle_webhook():
     try:
         data = request.get_json()
@@ -91,7 +107,7 @@ def register_all_handlers():
 
     # Admin handlers
     register_stats_handler(app)
-    register_premium_commands(app, db, ADMIN_IDS=con.ADMIN_USER_IDS)  # Use con directly
+    register_premium_commands(app, db, ADMIN_IDS=con.ADMIN_USER_IDS)
     register_gift_commands(app, db, ADMIN_IDS=con.ADMIN_USER_IDS)
     register_userinfo_command(app, db, ADMIN_IDS=con.ADMIN_USER_IDS)
     register_broadcast_command(app, db, ADMIN_IDS=con.ADMIN_USER_IDS)
@@ -116,7 +132,7 @@ async def main():
         
         # Get Render's external hostname
         webhook_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')
-        webhook_url = f"https://{webhook_host}/{con.BOT_TOKEN}"  # Use con directly
+        webhook_url = f"https://{webhook_host}/{con.BOT_TOKEN}"
         port = int(os.environ.get("PORT", 1000))
         
         try:
