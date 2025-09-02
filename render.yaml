@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: ip-tracker-bot
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.1
+      - key: RENDER
+        value: true
+      - key: WEBHOOK_HOST
+        fromService:
+          name: ip-tracker-bot
+          type: web
+          property: host
