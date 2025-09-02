@@ -3,6 +3,13 @@ from pyrogram import Client
 import logging
 import config
 import pymongo
+import time
+import threading
+import requests
+from flask import Flask, jsonify
+import os
+import asyncio
+from logging.handlers import RotatingFileHandler
 
 # Import handlers
 from Admins.stats import register_stats_handler
@@ -22,11 +29,22 @@ from XP_TOOLS.policy import register_policy_handler
 from Admins.admin_help import register_admin_help_handler
 from force_join import register_force_join_handlers, is_user_member, ask_user_to_join
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Configure logging
+log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# File handler with rotation
+file_handler = RotatingFileHandler('bot.log', maxBytes=5*1024*1024, backupCount=3)
+file_handler.setFormatter(log_formatter)
+
+# Console handler
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(log_formatter)
+
+# Get logger
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
 
 # MongoDB setup
 try:
@@ -46,30 +64,51 @@ app = Client(
 )
 
 # ================== Register all handlers ================== #
-register_force_join_handlers(app)  # Register force join handlers first
+def register_handlers():
+    register_force_join_handlers(app)
+    register_start_handler(app, db, users_collection, is_user_member, ask_user_to_join)
+    register_account_handler(app, db)
+    register_ip_scanner(app, db, is_user_member, ask_user_to_join)
+    register_inline_scanner(app, db, is_user_member, ask_user_to_join)
+    register_leaderboard_handler(app, db) 
+    register_contactus_handler(app)
 
-# Modify start handler to check for membership
-register_start_handler(app, db, users_collection, is_user_member, ask_user_to_join)
+    # Admin handlers
+    register_stats_handler(app)
+    register_premium_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
+    register_gift_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
+    register_userinfo_command(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
+    register_broadcast_command(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
+    register_user_management_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
+    register_maintenance_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
+    register_policy_handler(app)
+    register_admin_help_handler(app)
 
-# Modify other handlers to check for membership
-register_account_handler(app, db)
-register_ip_scanner(app, db, is_user_member, ask_user_to_join)
-register_inline_scanner(app, db, is_user_member, ask_user_to_join)
-register_leaderboard_handler(app, db) 
-register_contactus_handler(app)
+# Simple health check server
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
 
-# Admin handlers don't need force join check
-register_stats_handler(app)
-register_premium_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-register_gift_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-register_userinfo_command(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-register_broadcast_command(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-register_user_management_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-register_maintenance_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-register_policy_handler(app)
-register_admin_help_handler(app)
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'OK')
+        else:
+            self.send_response(404)
+            self.end_headers()
 
-# ================== Run Bot ================== #
-if __name__ == "__main__":
+def run_health_server():
+    server = HTTPServer(('0.0.0.0', 10000), HealthHandler)
+    logger.info("Health server started on port 10000")
+    server.serve_forever()
+
+if __name__ == '__main__':
+    # Start health server in background thread
+    health_thread = threading.Thread(target=run_health_server, daemon=True)
+    health_thread.start()
+    
+    # Register handlers and start bot
+    register_handlers()
+    logger.info("Starting bot...")
     app.run()
-# ================== End of File ================== # 
