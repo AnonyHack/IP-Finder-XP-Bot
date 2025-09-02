@@ -3,6 +3,9 @@ from pyrogram import Client
 import logging
 import config
 import pymongo
+import time
+import signal
+import sys
 
 # Import handlers
 from Admins.stats import register_stats_handler
@@ -69,7 +72,33 @@ register_maintenance_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
 register_policy_handler(app)
 register_admin_help_handler(app)
 
+# Signal handler for graceful shutdown
+def signal_handler(signum, frame):
+    logger.info("Received shutdown signal. Stopping bot...")
+    app.stop()
+    sys.exit(0)
+
+# Register signal handlers
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+
 # ================== Run Bot ================== #
 if __name__ == "__main__":
-    app.run()
-# ================== End of File ================== # 
+    logger.info("Starting bot in polling mode...")
+    
+    try:
+        # Start the bot
+        app.run()
+        
+        # Keep the bot running
+        logger.info("Bot is running. Press Ctrl+C to stop.")
+        while True:
+            time.sleep(3600)  # Sleep for 1 hour
+            
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user")
+    except Exception as e:
+        logger.error(f"Bot crashed with error: {e}")
+    finally:
+        app.stop()
+        logger.info("Bot stopped successfully")
