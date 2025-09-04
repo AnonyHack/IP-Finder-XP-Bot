@@ -1,11 +1,9 @@
-# XP_TOOLS/start.py
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from Admins.user_management import is_user_banned
-from Admins.maintenance import is_maintenance_mode, get_maintenance_message
+from Admins.maintenance import check_maintenance_mode as is_maintenance_mode, get_maintenance_message
+from config import con  # ✅ import config
 
-# Expose command metadata
-COMMANDS = [("start", "🔁 Restart The Bot")]
 
 def register_start_handler(app: Client, db, users_collection, is_user_member=None, ask_user_to_join=None):
     @app.on_message(filters.command("start") & filters.private)
@@ -18,7 +16,7 @@ def register_start_handler(app: Client, db, users_collection, is_user_member=Non
             await message.reply_text(
                 f"🚧 **Maintenance Mode Active**\n\n{maintenance_msg}\n\n"
                 f"⏰ Please try again later.\n"
-                f"📞 Contact: @Am_ItachiUchiha for updates",
+                f"📞 Contact: {con.BOT_DEVELOPER} for updates",
                 parse_mode="Markdown"
             )
             return
@@ -32,28 +30,30 @@ def register_start_handler(app: Client, db, users_collection, is_user_member=Non
         if is_user_member and not await is_user_member(client, user_id):
             await ask_user_to_join(client, message)
             return
-            
+
+        # Inline buttons (Developer + Powered By + Bot URL)
         inline_keyboard1 = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("IP Finder Bot", url="https://t.me/IpTrackerxpbot")]]
+            [
+                [InlineKeyboardButton("👨‍💻 Developer", url=con.BOT_DEVELOPER)],
+                [InlineKeyboardButton("👨‍💻 Powered By", url=con.POWERED_BY)],
+                [InlineKeyboardButton("🔍 IP Finder Bot", url=con.BOT_URL)]
+            ]
         )
+
         await app.send_photo(
             chat_id=message.chat.id,
-            photo="https://te.legra.ph/file/c2e0b27bf45dcaa104633.jpg",
+            photo=con.START_PHOTO_URL,
             caption='''
 👋 Hello There, 
 
 🤖 I'm IP FINDER BOT⚡️
-💫 Send Any Ip Address To Me 
+💫 Send Any IP Address To Me 
 🥳 I'm Also IPV6 Supported 
 ☘️ Inline Mode
 😎 Check IP Risk Level
 ✅ 24x7 Active
-🚀 Deployed On Faster VPS
 
 🧑‍💻How To Use: Start the bot and send any IP address to it. It's so easy✌️
-
-👨‍💻 Developer: @Am_ItachiUchiha ✅
-👨‍💻Powered By @Megahubbots
 ''',
             reply_markup=inline_keyboard1
         )
