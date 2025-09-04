@@ -14,8 +14,8 @@ def register_ip_scanner(app: Client, db, is_user_member=None, ask_user_to_join=N
     premium_db = db["premium_users"]
     users_collection = db[config.con.USERS_COLLECTION]
 
-    DEFAULT_SCANS = getattr(config.con, "SCANS_LIMIT", 2)
-    PREMIUM_SCANS = getattr(config.con, "PREMIUM_SCANS", 10)
+    DEFAULT_SCANS = getattr(config.con, "SCANS_LIMIT", 10)
+    PREMIUM_SCANS = getattr(config.con, "PREMIUM_SCANS", 50)
 
     # NOTE: exclude commands from this handler using regex 
     @app.on_message(filters.text & filters.private & ~filters.regex(r"^/"))
@@ -135,7 +135,7 @@ def register_ip_scanner(app: Client, db, is_user_member=None, ask_user_to_join=N
                             f"🕢Time Zone ➤ {x[6]}\n"
                             f"〽️Location ➤ <code>{x[9]}</code>\n"
                             f"💰 Currency ➤ {x[10]}\n\n"
-                            f"🔥Powered By @Megahubbots 🇱🇰\n"
+                            f"🔥Powered By @Megahubbots\n"
                             f"⏳ Scans Left: {scans_left}",
                     reply_markup=inline_keyboard
                 )
@@ -153,9 +153,10 @@ def register_ip_scanner(app: Client, db, is_user_member=None, ask_user_to_join=N
                          f"🕢Time Zone ➤ {x[6]}\n"
                          f"〽️Location ➤ <code>{x[9]}</code>\n"
                          f"💰 Currency ➤ {x[10]}\n\n"
-                         f"🔥Powered By @Megahubbots 🇱🇰\n"
+                         f"🔥Powered By @Megahubbots\n"
                          f"⏳ Scans Left: {scans_left}",
                     reply_markup=inline_keyboard
                 )
         except ValueError:
             return
+
