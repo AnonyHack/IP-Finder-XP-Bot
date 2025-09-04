@@ -1,6 +1,6 @@
 # main.py
 from pyrogram import Client
-import logging
+import logging, sys, traceback
 import config
 import pymongo
 import time
@@ -65,29 +65,67 @@ app = Client(
 
 # ================== Register all handlers ================== #
 def register_handlers():
-    register_force_join_handlers(app)
-    register_start_handler(app, db, users_collection, is_user_member, ask_user_to_join)
-    register_account_handler(app, db)
-    register_ip_scanner(app, db, is_user_member, ask_user_to_join)
-    register_inline_scanner(app, db, is_user_member, ask_user_to_join)
-    register_leaderboard_handler(app, db) 
-    register_contactus_handler(app)
+    try:
+        print("🔄 Registering force join handlers...")
+        register_force_join_handlers(app)
+        
+        print("🔄 Registering start handler...")
+        register_start_handler(app, db, users_collection, is_user_member, ask_user_to_join)
+        
+        print("🔄 Registering account handler...")
+        register_account_handler(app, db)
+        
+        print("🔄 Registering IP scanner...")
+        register_ip_scanner(app, db, is_user_member, ask_user_to_join)
+        
+        print("🔄 Registering inline scanner...")
+        register_inline_scanner(app, db, is_user_member, ask_user_to_join)
+        
+        print("🔄 Registering leaderboard...")
+        register_leaderboard_handler(app, db)
+        
+        print("🔄 Registering contact...")
+        register_contactus_handler(app)
 
-    # Admin handlers
-    register_stats_handler(app)
-    register_premium_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-    register_gift_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-    register_userinfo_command(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-    register_broadcast_command(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-    register_user_management_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-    register_maintenance_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
-    register_policy_handler(app)
-    register_admin_help_handler(app)
+        # Admin handlers
+        print("🔄 Registering stats...")
+        register_stats_handler(app)
+        
+        print("🔄 Registering premium commands...")
+        register_premium_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
+        
+        print("🔄 Registering gift commands...")
+        register_gift_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
+        
+        print("🔄 Registering userinfo...")
+        register_userinfo_command(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
+        
+        print("🔄 Registering broadcast...")
+        register_broadcast_command(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
+        
+        print("🔄 Registering user management...")
+        register_user_management_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
+        
+        print("🔄 Registering maintenance...")
+        register_maintenance_commands(app, db, ADMIN_IDS=config.con.ADMIN_USER_IDS)
+        
+        print("🔄 Registering policy...")
+        register_policy_handler(app)
+        
+        print("🔄 Registering admin help...")
+        register_admin_help_handler(app)
+
+        print("✅ All handlers registered successfully!")
+        
+    except Exception as e:
+        print(f"❌ Error registering handlers: {e}")
+        traceback.print_exc()
+        sys.exit(1)
 
 # Simple health check server
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
-
+ 
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/health':
