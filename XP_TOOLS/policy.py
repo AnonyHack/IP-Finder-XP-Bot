@@ -4,9 +4,6 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, 
 from pyrogram.enums import ParseMode
 from datetime import datetime
 
-# Expose command metadata
-COMMANDS = [("policy", " 🛡️ View Usage Policy")]
-
 def register_policy_handler(app: Client):
     @app.on_message(filters.command("policy") & filters.private)
     async def policy_command(client: Client, message: Message):
