@@ -18,8 +18,8 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
     premium_db = db["premium_users"]
     users_collection = db[config.con.USERS_COLLECTION]
 
-    DEFAULT_SCANS = getattr(config.con, "SCANS_LIMIT", 2)
-    PREMIUM_SCANS = getattr(config.con, "PREMIUM_SCANS", 10)
+    DEFAULT_SCANS = getattr(config.con, "SCANS_LIMIT", 5)
+    PREMIUM_SCANS = getattr(config.con, "PREMIUM_SCANS", 50)
 
     @app.on_inline_query()
     async def inline_query_handler(client: Client, query: InlineQuery):
