@@ -5,18 +5,16 @@ from datetime import datetime
 import config
 import pymongo
 from Admins.user_management import is_user_banned
-from Admins.maintenance import is_maintenance_mode, get_maintenance_message
+from Admins.maintenance import check_maintenance_mode as is_maintenance_mode, get_maintenance_message
 
 mongo_client = pymongo.MongoClient(config.con.MONGO_URI)
 db = mongo_client[config.con.MONGO_DB]
 users_collection = db[config.con.USERS_COLLECTION]
 premium_db = db["premium_users"]
 
-# Expose command metadata
-COMMANDS = [("myaccount", " 🪪 My Profile Page")]
 
 # Default scans for free users
-DEFAULT_SCANS = getattr(config.con, "SCANS_LIMIT", 10)
+DEFAULT_SCANS = getattr(config.con, "SCANS_LIMIT", 5)
 PREMIUM_SCANS = getattr(config.con, "PREMIUM_SCANS", 50)
 
 def register_account_handler(app: Client, db, is_user_member=None, ask_user_to_join=None):
@@ -126,6 +124,7 @@ def register_account_handler(app: Client, db, is_user_member=None, ask_user_to_j
             "• Priority Support\n"
             "• Additional Features Coming Soon\n\n"
             "💰 Contact admin for pricing"
+            "━━━━━━━━━━━━━━━━━━━━━"
         )
         await callback_query.answer()
         await callback_query.message.edit_text(text)
