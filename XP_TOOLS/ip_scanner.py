@@ -6,7 +6,7 @@ from datetime import datetime
 import config
 from XP_TOOLS.leaderboard import increment_search
 from Admins.user_management import is_user_banned
-from Admins.maintenance import is_maintenance_mode, get_maintenance_message
+from Admins.maintenance import check_maintenance_mode as is_maintenance_mode, get_maintenance_message
 
 def register_ip_scanner(app: Client, db, is_user_member=None, ask_user_to_join=None):
     ip_data = {}
