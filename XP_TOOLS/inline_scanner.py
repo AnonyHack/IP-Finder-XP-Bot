@@ -1,13 +1,17 @@
 # XP_TOOLS/inline_scanner.py
 from pyrogram import Client
-from pyrogram.types import InlineQuery, InlineQueryResultPhoto, InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
+from pyrogram.types import (
+    InlineQuery, InlineQueryResultPhoto, InlineKeyboardMarkup,
+    InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
+)
 import ipinfo, ipaddress
 from datetime import datetime
 import config
 
-from XP_TOOLS.leaderboard import increment_search # ✅ Import leaderboard increment function
+from XP_TOOLS.leaderboard import increment_search  # ✅ Import leaderboard increment function
 from Admins.user_management import is_user_banned
-from Admins.maintenance import is_maintenance_mode, get_maintenance_message
+from Admins.maintenance import check_maintenance_mode as is_maintenance_mode, get_maintenance_message
+
 
 def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_join=None):
     search_logs = db["search_logs"]
@@ -21,7 +25,7 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
     async def inline_query_handler(client: Client, query: InlineQuery):
         user_id = query.from_user.id
 
-        # Check if maintenance mode is active
+        # ---------------- MAINTENANCE CHECK ----------------
         if await is_maintenance_mode():
             maintenance_msg = await get_maintenance_message()
             await query.answer([
@@ -30,7 +34,7 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
                     input_message_content=InputTextMessageContent(
                         f"🚧 Maintenance Mode Active\n\n{maintenance_msg}\n\n"
                         f"⏰ Please try again later.\n"
-                        f"📞 Contact: @Am_ItachiUchiha for updates"
+                        f"📞 Contact: {config.con.BOT_DEVELOPER} for updates"
                     ),
                     description="Bot is under maintenance",
                     thumb_url="https://img.icons8.com/fluency/48/maintenance.png"
@@ -38,7 +42,7 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
             ], cache_time=0, is_personal=True)
             return
 
-        # Check if user is banned
+        # ---------------- BAN CHECK ----------------
         if await is_user_banned(db, user_id):
             await query.answer([
                 InlineQueryResultArticle(
@@ -52,9 +56,8 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
             ], cache_time=0, is_personal=True)
             return
 
-        # Check if user is member of required channels
+        # ---------------- FORCE JOIN CHECK ----------------
         if is_user_member and not await is_user_member(client, user_id):
-            # Can't send messages in inline mode, so show error result
             results = [
                 InlineQueryResultArticle(
                     title="Join Required Channels",
@@ -68,11 +71,11 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
             ]
             await query.answer(results, cache_time=0, is_personal=True)
             return
-            
+
         username = query.from_user.username or None
         query_str = query.query.strip()
 
-        # ------------------ PREMIUM CHECK ------------------
+        # ---------------- PREMIUM CHECK ----------------
         premium_record = premium_db.find_one({"user_id": user_id})
         is_premium = False
         scans_limit = DEFAULT_SCANS
@@ -80,10 +83,9 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
             is_premium = True
             scans_limit = PREMIUM_SCANS
 
-        # ------------------ SCANS LEFT CHECK ------------------
+        # ---------------- SCANS LEFT ----------------
         user_record = users_collection.find_one({"user_id": user_id})
         if not user_record:
-            # Create record if not exists
             users_collection.insert_one({"user_id": user_id, "username": username, "scans_left": scans_limit})
             scans_left = scans_limit
         else:
@@ -119,9 +121,9 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
                 {"user_id": user_id},
                 {"$inc": {"scans_left": -1}, "$set": {"username": username}}
             )
-            scans_left -= 1  # local variable for immediate display
+            scans_left -= 1
 
-            # ✅ Increment leaderboard search count
+            # ✅ Increment leaderboard
             increment_search(db, user_id, username)
 
             access_token = config.con.IP_API
@@ -140,9 +142,9 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
 
             results = [
                 InlineQueryResultPhoto(
-                    photo_url="https://telegra.ph/file/dba626143ccfea3c4d718.jpg",
+                    photo_url="https://i.ibb.co/C5x5KCdn/LG.jpg",
                     id="80100192",
-                    thumb_url="https://telegra.ph/file/dba626143ccfea3c4d718.jpg",
+                    thumb_url="https://i.ibb.co/C5x5KCdn/LG.jpg",
                     title='🌎 Inline Share Location 🔎',
                     description=f"🍀 Location Found : {x[0]}",
                     caption=f"🍀 Location Found 🔎\n\n"
@@ -156,11 +158,13 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
                             f"🕢Time Zone ➤ {x[6]}\n"
                             f"〽️Location ➤ <code>{x[9]}</code>\n"
                             f"💰 Currency ➤ {x[10]}\n\n"
-                            f"🔥Powered By @Megahubbots 🇱🇰\n"
+                            f"👨‍💻 Developer: {config.con.BOT_DEVELOPER}\n"
+                            f"👨‍💻 Powered By: {config.con.POWERED_BY}\n"
                             f"⏳ Scans Left: {scans_left}",
                     reply_markup=InlineKeyboardMarkup([
-                        [InlineKeyboardButton('‍🔥Megahubbots', url='https://t.me/Megahubbots')],
-                        [InlineKeyboardButton('🤖 IP ҒIΠDΣR BOT 🔎', url='https://t.me/IpTrackerxpbot')]
+                        [InlineKeyboardButton("👨‍💻 Developer", url=config.con.BOT_DEVELOPER)],
+                        [InlineKeyboardButton("👨‍💻 Powered By", url=config.con.POWERED_BY)],
+                        [InlineKeyboardButton("🤖 Start Bot", url=config.con.BOT_URL)]
                     ])
                 )
             ]
