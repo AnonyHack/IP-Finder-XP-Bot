@@ -92,6 +92,11 @@ def register_stats_handler(app: Client):
         ]))
         last_30d_revenue_val = last_30d_revenue_cursor[0]["sum"] if last_30d_revenue_cursor else 0
 
+        # --------------------- GIFT CODE STATS ---------------------
+        gift_codes_collection = db["gift_codes"]
+        total_gift_codes = gift_codes_collection.count_documents({})
+        used_gift_codes = gift_codes_collection.count_documents({"is_used": True})
+
         # --------------------- SEND DASHBOARD ---------------------
         await message.reply_text(
             f"📊 ADMIN DASHBOARD | STATISTICS\n"
@@ -113,5 +118,9 @@ def register_stats_handler(app: Client):
             f"• Total Payments: {total_payments} | Revenue: {total_revenue_val} ⭐️\n"
             f"• Today: {today_payments} payments | {today_revenue_val} ⭐️\n"
             f"• 7-Days: {last_7d_payments} payments | {last_7d_revenue_val} ⭐️\n"
-            f"• 30-Days: {last_30d_payments} payments | {last_30d_revenue_val} ⭐️"
+            f"• 30-Days: {last_30d_payments} payments | {last_30d_revenue_val} ⭐️\n\n"
+
+            f"🎁 Gift Codes Statistics:\n"
+            f"   ├ Total: {total_gift_codes}\n"
+            f"   └ Used: {used_gift_codes}"
         )
