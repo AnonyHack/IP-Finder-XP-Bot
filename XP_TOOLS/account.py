@@ -123,8 +123,9 @@ def register_account_handler(app: Client, db, is_user_member=None, ask_user_to_j
             "• Faster Results\n"
             "• Priority Support\n"
             "• Additional Features Coming Soon\n\n"
-            "💰 Contact admin for pricing"
+            "💰 Contact admin for pricing\n\n"
             "━━━━━━━━━━━━━━━━━━━━━"
         )
         await callback_query.answer()
         await callback_query.message.edit_text(text)
+
