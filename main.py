@@ -126,6 +126,11 @@ def register_handlers():
 from keep_alive import start_keep_alive
 
 if __name__ == '__main__':
+    print("🚀 Starting IP Tracker Bot...")
+    print(f"📱 API_ID: {config.con.API_ID}")
+    print(f"🔑 BOT_TOKEN present: {bool(config.con.BOT_TOKEN)}")
+    print(f"🗄️ MONGO_URI present: {bool(config.con.MONGO_URI)}")
+    
     # Start keep alive system (health server + pinging)
     start_keep_alive()
     
