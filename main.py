@@ -122,29 +122,12 @@ def register_handlers():
         traceback.print_exc()
         sys.exit(1)
 
-# Simple health check server
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import threading
- 
-class HealthHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/health':
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b'OK')
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-def run_health_server():
-    server = HTTPServer(('0.0.0.0', 10000), HealthHandler)
-    logger.info("Health server started on port 10000")
-    server.serve_forever()
+# Simple health check server - REPLACE THIS SECTION IN YOUR main.py
+from keep_alive import start_keep_alive
 
 if __name__ == '__main__':
-    # Start health server in background thread
-    health_thread = threading.Thread(target=run_health_server, daemon=True)
-    health_thread.start()
+    # Start keep alive system (health server + pinging)
+    start_keep_alive()
     
     # Register handlers and start bot
     register_handlers()
