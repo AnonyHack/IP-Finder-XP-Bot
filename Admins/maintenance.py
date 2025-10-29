@@ -1,5 +1,5 @@
 from pyrogram import Client, filters, enums
-from pyrogram.types import Message
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 from datetime import datetime, timedelta
 import asyncio
 import threading
@@ -7,8 +7,11 @@ import time
 
 # Global maintenance state
 maintenance_mode = False
-maintenance_message = "🚧 The bot is currently under maintenance. Please try again later."
+maintenance_message = "🚧 Tʜᴇ Bᴏᴛ ɪꜱ Cᴜʀʀᴇɴᴛʟʏ Uɴᴅᴇʀ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ, Pʟᴇᴀꜱᴇ ᴛʀʏ ᴀɢᴀɪɴ Lᴀᴛᴇʀ."
 maintenance_end_time = None
+
+# Maintenance duration (1 hour in seconds)
+MAINTENANCE_AUTO_DISABLE_TIME = 3600
 
 # Conversation states - track which admin is waiting for maintenance message
 maintenance_setup_state = {}
@@ -34,130 +37,255 @@ def register_maintenance_commands(app: Client, db, ADMIN_IDS):
             maintenance_end_time = None
 
             await message.reply_text(
-                "✅ **Maintenance Mode Disabled**\n\n"
-                "All bot services have been restored to normal operation.\n\n"
-                "▸ **Status**: Online\n"
-                "▸ **Users**: Can access all features\n"
-                "▸ **Time**: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "✅ **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Mᴏᴅᴇ Dɪꜱᴀʙʟᴇᴅ**\n\n"
+                "🔧 **Aʟʟ ʙᴏᴛ ꜱᴇʀᴠɪᴄᴇꜱ ʜᴀᴠᴇ ʙᴇᴇɴ ʀᴇꜱᴛᴏʀᴇᴅ ᴛᴏ ɴᴏʀᴍᴀʟ ᴏᴘᴇʀᴀᴛɪᴏɴ.**\n\n"
+                "▸ **Sᴛᴀᴛᴜꜱ**: Oɴʟɪɴᴇ\n"
+                "▸ **Uꜱᴇʀꜱ**: Cᴀɴ ᴀᴄᴄᴇꜱꜱ ᴀʟʟ ꜰᴇᴀᴛᴜʀᴇꜱ\n"
+                "▸ **Tɪᴍᴇ**: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 parse_mode=enums.ParseMode.MARKDOWN,
             )
         else:
-            # Enable maintenance mode setup
-            maintenance_setup_state[message.from_user.id] = True
+            # Check if command has message attached
+            if len(message.command) > 1:
+                # Message provided with command
+                maintenance_msg_text = " ".join(message.command[1:])
+                await process_maintenance_message(client, message, maintenance_msg_text)
+            else:
+                # Enable maintenance mode setup - ask for message
+                maintenance_setup_state[message.from_user.id] = True
 
-            await message.reply_text(
-                "🔧 **Maintenance Mode Setup**\n\n"
-                "Please enter the maintenance message to send to users:\n\n"
-                "▸ **Format**: Text message explaining maintenance\n"
-                "▸ **Duration**: 1 hour (auto-disables)\n\n"
-                "✘ Type **'cancel'** to abort",
-                parse_mode=enums.ParseMode.MARKDOWN,
-            )
+                # Create cancel button
+                cancel_markup = ReplyKeyboardMarkup(
+                    [[KeyboardButton("❌ Cᴀɴᴄᴇʟ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ")]],
+                    resize_keyboard=True,
+                    one_time_keyboard=True
+                )
+
+                await message.reply_text(
+                    "✍️ **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Mᴏᴅᴇ Sᴇᴛᴜᴘ**\n\n"
+                    "**Pʟᴇᴀꜱᴇ ᴇɴᴛᴇʀ ᴛʜᴇ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ ᴍᴇꜱꜱᴀɢᴇ ᴛᴏ ꜱᴇɴᴅ ᴛᴏ ᴜꜱᴇʀꜱ:**\n\n"
+                    "▸ **Fᴏʀᴍᴀᴛ**: Yᴏᴜ ᴄᴀɴ ᴜꜱᴇ ʙᴏʟᴅ, ɪᴛᴀʟɪᴄ, ᴏʀ Qᴜᴏᴛᴇᴅ ᴛᴇxᴛ\n"
+                    "▸ **Dᴜʀᴀᴛɪᴏɴ**: 1 ʜᴏᴜʀ (ᴀᴜᴛᴏ-ᴅɪꜱᴀʙʟᴇꜱ)\n\n"
+                    "**❌ Cʟɪᴄᴋ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ᴛᴏ ᴄᴀɴᴄᴇʟ**",
+                    parse_mode=enums.ParseMode.MARKDOWN,
+                    reply_markup=cancel_markup
+                )
+
+    async def process_maintenance_message(client: Client, message: Message, maintenance_msg_text: str):
+        """Process the maintenance message and show confirmation"""
+        global maintenance_message
+        
+        maintenance_message = maintenance_msg_text
+        
+        # Calculate hours and minutes for display
+        hours = MAINTENANCE_AUTO_DISABLE_TIME // 3600
+        minutes = (MAINTENANCE_AUTO_DISABLE_TIME % 3600) // 60
+        time_display = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+        
+        users = await get_all_users()
+        
+        # Create confirmation buttons
+        markup = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("✅ Aᴄᴄᴇᴘᴛ & Sᴇɴᴅ", callback_data="accept_maintenance"),
+                InlineKeyboardButton("❌ Cᴀɴᴄᴇʟ", callback_data="cancel_maintenance")
+            ]
+        ])
+        
+        await message.reply_text(
+            f"🔧 **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Mᴇꜱꜱᴀɢᴇ Cᴏɴꜰɪʀᴍᴀᴛɪᴏɴ**\n\n"
+            f"**Yᴏᴜʀ ᴍᴇꜱꜱᴀɢᴇ:**\n"
+            f"`{maintenance_message}`\n\n"
+            f"**Tʜɪꜱ ᴍᴇꜱꜱᴀɢᴇ ᴡɪʟʟ ʙᴇ ꜱᴇɴᴛ ᴛᴏ ᴀʟʟ ᴜꜱᴇʀꜱ ᴀɴᴅ ᴛʜᴇ ʙᴏᴛ ᴡɪʟʟ ɢᴏ ɪɴᴛᴏ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ ᴍᴏᴅᴇ.**\n\n"
+            f"▸ **Tᴏᴛᴀʟ Uꜱᴇʀꜱ**: `{len(users)}`\n"
+            f"▸ **Aᴜᴛᴏ-ᴅɪꜱᴀʙʟᴇ**: `{time_display}`\n\n"
+            f"**Cʟɪᴄᴋ 'Aᴄᴄᴇᴘᴛ & Sᴇɴᴅ' ᴛᴏ ᴄᴏɴꜰɪʀᴍ ᴏʀ 'Cᴀɴᴄᴇʟ' ᴛᴏ ᴀʙᴏʀᴛ:**",
+            parse_mode=enums.ParseMode.MARKDOWN,
+            reply_markup=markup
+        )
 
     # Handler for maintenance message input
     @app.on_message(
         filters.user(ADMIN_IDS)
         & filters.private
         & filters.text
-        & ~filters.command(["mainmode", "mainstatus"])
+        & ~filters.command(["mainmode", "mainstatus", "start", "help"])
     )
     async def handle_maintenance_input(client: Client, message: Message):
         """Handle maintenance message input"""
-        global maintenance_mode, maintenance_message, maintenance_end_time
-
         user_id = message.from_user.id
 
         # Check if user is in maintenance setup state
         if user_id not in maintenance_setup_state:
             return  # Not in setup mode, ignore
 
+        # Check if it's the cancel button
+        if message.text.strip() == "❌ Cᴀɴᴄᴇʟ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ":
+            # Remove from setup state
+            if user_id in maintenance_setup_state:
+                del maintenance_setup_state[user_id]
+            
+            await message.reply_text(
+                "❌ **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ ꜱᴇᴛᴜᴘ ᴄᴀɴᴄᴇʟʟᴇᴅ.**",
+                parse_mode=enums.ParseMode.MARKDOWN,
+                reply_markup=None
+            )
+            return
+
         # Remove from setup state
         del maintenance_setup_state[user_id]
 
-        if message.text.lower() == "cancel":
-            await message.reply_text("❌ Maintenance setup cancelled.")
+        await process_maintenance_message(client, message, message.text)
+
+    # Callback handler for maintenance confirmation
+    @app.on_callback_query(filters.regex(r"^(accept_maintenance|cancel_maintenance)$"))
+    async def handle_maintenance_confirmation(client: Client, callback_query):
+        global maintenance_mode, maintenance_message, maintenance_end_time
+        
+        if callback_query.data == "cancel_maintenance":
+            await callback_query.answer("❌ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ ᴄᴀɴᴄᴇʟʟᴇᴅ")
+            await callback_query.message.edit_text(
+                "🛑 **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Mᴏᴅᴇ Cᴀɴᴄᴇʟʟᴇᴅ**\n\n"
+                "**Tʜᴇ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ ᴍᴏᴅᴇ ʜᴀꜱ ʙᴇᴇɴ ᴄᴀɴᴄᴇʟʟᴇᴅ. Tʜᴇ ʙᴏᴛ ʀᴇᴍᴀɪɴꜱ ᴀᴄᴛɪᴠᴇ.**",
+                parse_mode=enums.ParseMode.MARKDOWN
+            )
             return
+        
+        if callback_query.data == "accept_maintenance":
+            await callback_query.answer("⏳ Eɴᴀʙʟɪɴɢ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ ᴍᴏᴅᴇ...")
+            
+            # Enable maintenance mode
+            maintenance_mode = True
+            maintenance_end_time = datetime.now() + timedelta(seconds=MAINTENANCE_AUTO_DISABLE_TIME)
+            
+            # Update the confirmation message
+            await callback_query.message.edit_text(
+                "⏳ **Eɴᴀʙʟɪɴɢ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Mᴏᴅᴇ...**\n\n"
+                "🔄 **Sᴇɴᴅɪɴɢ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ ɴᴏᴛɪꜰɪᴄᴀᴛɪᴏɴꜱ ᴛᴏ ᴀʟʟ ᴜꜱᴇʀꜱ...**",
+                parse_mode=enums.ParseMode.MARKDOWN
+            )
+            
+            # Send to all users
+            users = await get_all_users()
+            sent = 0
+            failed = 0
 
-        # Set maintenance message and enable mode
-        maintenance_message = message.text
-        maintenance_mode = True
-        maintenance_end_time = datetime.now() + timedelta(hours=1)
+            progress_msg = await callback_query.message.reply_text(
+                f"📨 **Sᴇɴᴅɪɴɢ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Nᴏᴛɪᴄᴇꜱ**\n\n"
+                f"▸ **Tᴏᴛᴀʟ Uꜱᴇʀꜱ**: `{len(users)}`\n"
+                f"▸ **Sᴛᴀᴛᴜꜱ**: Pʀᴏᴄᴇꜱꜱɪɴɢ...\n\n"
+                f"[░░░░░░░░░░] 0%",
+                parse_mode=enums.ParseMode.MARKDOWN,
+            )
 
-        # Send to all users
-        users = await get_all_users()
-        sent = 0
-        failed = 0
+            # Calculate update interval
+            update_interval = max(1, len(users) // 10)
 
-        progress_msg = await message.reply_text(
-            f"📨 **Sending Maintenance Notices**\n\n"
-            f"▸ **Total Users**: {len(users)}\n"
-            f"▸ **Status**: Processing...\n\n"
-            f"[░░░░░░░░░░] 0%",
-            parse_mode=enums.ParseMode.MARKDOWN,
-        )
-
-        # Calculate update interval
-        update_interval = max(1, len(users) // 10)
-
-        for index, user_id in enumerate(users):
-            try:
-                await client.send_message(
-                    user_id,
-                    f"⚠️ **Maintenance Notice**\n\n{maintenance_message}\n\n"
-                    f"▸ **Estimated Downtime**: 1 hour\n"
-                    f"▸ **Status**: Temporary service interruption\n"
-                    f"▸ **Contact**: @Am_ItachiUchiha for updates",
-                    parse_mode=enums.ParseMode.MARKDOWN,
-                )
-                sent += 1
-            except Exception as e:
-                print(f"Failed to send to user {user_id}: {e}")
-                failed += 1
-
-            # Update progress periodically
-            if (index + 1) % update_interval == 0 or index + 1 == len(users):
-                progress = int((index + 1) / len(users) * 100)
-                progress_bar = "█" * (progress // 10) + "░" * (10 - progress // 10)
-
+            for index, user_id in enumerate(users):
                 try:
-                    await progress_msg.edit_text(
-                        f"📨 **Sending Maintenance Notices**\n\n"
-                        f"▸ **Total Users**: {len(users)}\n"
-                        f"▸ **Successful**: {sent}\n"
-                        f"▸ **Failed**: {failed}\n"
-                        f"▸ **Status**: Sending...\n\n"
-                        f"[{progress_bar}] {progress}%",
+                    await client.send_message(
+                        user_id,
+                        f"⚠️ **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Nᴏᴛɪᴄᴇ**\n\n{maintenance_message}\n\n"
+                        f"▸ **Eꜱᴛɪᴍᴀᴛᴇᴅ Dᴏᴡɴᴛɪᴍᴇ**: 1 ʜᴏᴜʀ\n"
+                        f"▸ **Sᴛᴀᴛᴜꜱ**: Tᴇᴍᴘᴏʀᴀʀʏ ꜱᴇʀᴠɪᴄᴇ ɪɴᴛᴇʀʀᴜᴘᴛɪᴏɴ\n"
+                        f"▸ **Cᴏɴᴛᴀᴄᴛ**: @Am_ItachiUchiha ꜰᴏʀ ᴜᴘᴅᴀᴛᴇꜱ",
                         parse_mode=enums.ParseMode.MARKDOWN,
                     )
+                    sent += 1
                 except Exception as e:
-                    print(f"Error updating progress: {e}")
+                    print(f"Failed to send to user {user_id}: {e}")
+                    failed += 1
 
-            await asyncio.sleep(0.1)  # Rate limiting
+                # Update progress periodically
+                if (index + 1) % update_interval == 0 or index + 1 == len(users):
+                    progress = int((index + 1) / len(users) * 100)
+                    progress_bar = "█" * (progress // 10) + "░" * (10 - progress // 10)
 
-        # Start auto-disable thread
-        def auto_disable_maintenance():
-            time.sleep(3600)  # 1 hour
-            global maintenance_mode, maintenance_end_time
-            maintenance_mode = False
-            maintenance_end_time = None
+                    try:
+                        await progress_msg.edit_text(
+                            f"📨 **Sᴇɴᴅɪɴɢ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Nᴏᴛɪᴄᴇꜱ**\n\n"
+                            f"▸ **Tᴏᴛᴀʟ Uꜱᴇʀꜱ**: `{len(users)}`\n"
+                            f"▸ **Sᴜᴄᴄᴇꜱꜱꜰᴜʟ**: `{sent}`\n"
+                            f"▸ **Fᴀɪʟᴇᴅ**: `{failed}`\n"
+                            f"▸ **Sᴛᴀᴛᴜꜱ**: Sᴇɴᴅɪɴɢ...\n\n"
+                            f"[{progress_bar}] {progress}%",
+                            parse_mode=enums.ParseMode.MARKDOWN,
+                        )
+                    except Exception as e:
+                        print(f"Error updating progress: {e}")
 
-        threading.Thread(target=auto_disable_maintenance, daemon=True).start()
+                await asyncio.sleep(0.1)  # Rate limiting
 
-        await message.reply_text(
-            f"🔧 **Maintenance Mode Enabled**\n\n"
-            f"▸ **Status**: Maintenance active\n"
-            f"▸ **Duration**: 1 hour (auto-disables)\n"
-            f"▸ **Notifications**: Sent to {sent} users\n"
-            f"▸ **Failed**: {failed} users\n\n"
-            f"⏰ **Auto-disable at**: {maintenance_end_time.strftime('%Y-%m-%d %H:%M:%S')}",
-            parse_mode=enums.ParseMode.MARKDOWN,
-        )
+            # Calculate hours and minutes for display
+            hours = MAINTENANCE_AUTO_DISABLE_TIME // 3600
+            minutes = (MAINTENANCE_AUTO_DISABLE_TIME % 3600) // 60
+            time_display = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
 
-        # Delete progress message
-        try:
-            await progress_msg.delete()
-        except:
-            pass
+            # Final update with results
+            await callback_query.message.edit_text(
+                f"✅ **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Mᴏᴅᴇ Eɴᴀʙʟᴇᴅ**\n\n"
+                f"📊 **Nᴏᴛɪꜰɪᴄᴀᴛɪᴏɴ Rᴇꜱᴜʟᴛꜱ:**\n"
+                f"├ ✅ **Sᴜᴄᴄᴇꜱꜱꜰᴜʟ**: `{sent}`\n"
+                f"└ ❌ **Fᴀɪʟᴇᴅ**: `{failed}`\n\n"
+                f"⏰ **Aᴜᴛᴏ-ᴅɪꜱᴀʙʟᴇ ɪɴ**: `{time_display}`\n"
+                f"🕒 **Aᴜᴛᴏ-ᴅɪꜱᴀʙʟᴇ ᴀᴛ**: `{maintenance_end_time.strftime('%Y-%m-%d %H:%M:%S')}`\n\n"
+                f"🔧 **Tʜᴇ ʙᴏᴛ ɪꜱ ɴᴏᴡ ɪɴ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ ᴍᴏᴅᴇ**",
+                parse_mode=enums.ParseMode.MARKDOWN
+            )
+
+            # Delete progress message
+            try:
+                await progress_msg.delete()
+            except:
+                pass
+
+            # Start auto-disable thread
+            def auto_disable_maintenance():
+                time.sleep(MAINTENANCE_AUTO_DISABLE_TIME)
+                
+                async def disable_maintenance_async():
+                    global maintenance_mode, maintenance_end_time
+                    maintenance_mode = False
+                    maintenance_end_time = None
+                    
+                    # Notify all admins
+                    for admin_id in ADMIN_IDS:
+                        try:
+                            await client.send_message(
+                                admin_id,
+                                "✅ **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Mᴏᴅᴇ Aᴜᴛᴏ-Dɪꜱᴀʙʟᴇᴅ**\n\n"
+                                "🔧 **Tʜᴇ ʙᴏᴛ ʜᴀꜱ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ᴇxɪᴛᴇᴅ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ ᴍᴏᴅᴇ ᴀɴᴅ ɪꜱ ɴᴏᴡ ᴀᴄᴛɪᴠᴇ.**\n\n"
+                                "⏰ **Dᴜʀᴀᴛɪᴏɴ**: Cᴏᴍᴘʟᴇᴛᴇᴅ\n"
+                                "👥 **Uꜱᴇʀꜱ ɴᴏᴛɪꜰɪᴇᴅ**: Yᴇꜱ",
+                                parse_mode=enums.ParseMode.MARKDOWN
+                            )
+                        except Exception as e:
+                            print(f"Failed to notify admin {admin_id}: {e}")
+                    
+                    # Notify all users
+                    users = await get_all_users()
+                    for user_id in users:
+                        try:
+                            await client.send_message(
+                                user_id,
+                                "🎉 **Bᴏᴛ Iꜱ Bᴀᴄᴋ Oɴʟɪɴᴇ!**\n\n"
+                                "✅ **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ ᴄᴏᴍᴘʟᴇᴛᴇᴅ**\n\n"
+                                "🔧 **Tʜᴇ ʙᴏᴛ ɪꜱ ɴᴏᴡ ᴀᴄᴛɪᴠᴇ ᴀɴᴅ ʀᴇᴀᴅʏ ꜰᴏʀ ᴜꜱᴇ.**\n\n"
+                                "✨ **Tʜᴀɴᴋ ʏᴏᴜ ꜰᴏʀ ʏᴏᴜʀ ᴘᴀᴛɪᴇɴᴄᴇ!**\n\n"
+                                "➤ **Yᴏᴜ ᴄᴀɴ ɴᴏᴡ ᴜꜱᴇ ᴀʟʟ ꜰᴇᴀᴛᴜʀᴇꜱ ɴᴏʀᴍᴀʟʟʏ.**",
+                                parse_mode=enums.ParseMode.MARKDOWN
+                            )
+                            await asyncio.sleep(0.1)  # Rate limiting
+                        except:
+                            continue
+
+                # Run the async function in a new thread
+                def run_async():
+                    asyncio.run(disable_maintenance_async())
+                
+                threading.Thread(target=run_async, daemon=True).start()
+
+            threading.Thread(target=auto_disable_maintenance, daemon=True).start()
 
     # ------------- /mainstatus command -------------
     @app.on_message(filters.command("mainstatus") & filters.user(ADMIN_IDS))
@@ -175,22 +303,76 @@ def register_maintenance_commands(app: Client, db, ADMIN_IDS):
             hours, remainder = divmod(time_left.total_seconds(), 3600)
             minutes, seconds = divmod(remainder, 60)
 
+            # Create turn off button for active maintenance
+            markup = InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔓 Tᴜʀɴ Oꜰꜰ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ", callback_data="turn_off_maintenance")]
+            ])
+
             status_text = (
-                f"🔧 **Maintenance Status**\n\n"
-                f"▸ **Status**: ACTIVE 🚧\n"
-                f"▸ **Time Left**: {int(hours)}h {int(minutes)}m {int(seconds)}s\n"
-                f"▸ **Auto-disable**: {maintenance_end_time.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                f"📝 **Message**:\n{maintenance_message}"
+                f"🔧 **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Sᴛᴀᴛᴜꜱ**\n\n"
+                f"▸ **Sᴛᴀᴛᴜꜱ**: ACTIVE 🚧\n"
+                f"▸ **Tɪᴍᴇ Lᴇꜰᴛ**: {int(hours)}ʜ {int(minutes)}ᴍ {int(seconds)}ꜱ\n"
+                f"▸ **Aᴜᴛᴏ-ᴅɪꜱᴀʙʟᴇ**: {maintenance_end_time.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                f"📝 **Mᴇꜱꜱᴀɢᴇ**:\n`{maintenance_message}`"
             )
+            
+            await message.reply_text(status_text, parse_mode=enums.ParseMode.MARKDOWN, reply_markup=markup)
         else:
             status_text = (
-                "✅ **Maintenance Status**\n\n"
-                "▸ **Status**: INACTIVE\n"
-                "▸ **Bot**: Fully operational\n"
-                "▸ **Users**: Can access all features"
+                "✅ **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Sᴛᴀᴛᴜꜱ**\n\n"
+                "▸ **Sᴛᴀᴛᴜꜱ**: INACTIVE\n"
+                "▸ **Bᴏᴛ**: Fᴜʟʟʏ ᴏᴘᴇʀᴀᴛɪᴏɴᴀʟ\n"
+                "▸ **Uꜱᴇʀꜱ**: Cᴀɴ ᴀᴄᴄᴇꜱꜱ ᴀʟʟ ꜰᴇᴀᴛᴜʀᴇꜱ"
             )
 
-        await message.reply_text(status_text, parse_mode=enums.ParseMode.MARKDOWN)
+            await message.reply_text(status_text, parse_mode=enums.ParseMode.MARKDOWN)
+
+    # Callback handler for turning off maintenance
+    @app.on_callback_query(filters.regex(r"^turn_off_maintenance$"))
+    async def handle_turn_off_maintenance(client: Client, callback_query):
+        global maintenance_mode, maintenance_end_time
+        
+        if not maintenance_mode:
+            await callback_query.answer("❌ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ ᴍᴏᴅᴇ ɪꜱ ᴀʟʀᴇᴀᴅʏ ᴏꜰꜰ")
+            await callback_query.message.edit_text(
+                "✅ **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Mᴏᴅᴇ Iꜱ Aʟʀᴇᴀᴅʏ Oꜰꜰ**\n\n"
+                "**Tʜᴇ ʙᴏᴛ ɪꜱ ᴀʟʀᴇᴀᴅʏ ɪɴ ɴᴏʀᴍᴀʟ ᴏᴘᴇʀᴀᴛɪᴏɴ ᴍᴏᴅᴇ.**",
+                parse_mode=enums.ParseMode.MARKDOWN
+            )
+            return
+        
+        # Disable maintenance mode
+        maintenance_mode = False
+        maintenance_end_time = None
+        
+        await callback_query.answer("✅ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ ᴍᴏᴅᴇ ᴅɪꜱᴀʙʟᴇᴅ")
+        
+        # Update the status message
+        await callback_query.message.edit_text(
+            "✅ **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Mᴏᴅᴇ Dɪꜱᴀʙʟᴇᴅ**\n\n"
+            "🔧 **Aʟʟ ʙᴏᴛ ꜱᴇʀᴠɪᴄᴇꜱ ʜᴀᴠᴇ ʙᴇᴇɴ ʀᴇꜱᴛᴏʀᴇᴅ ᴛᴏ ɴᴏʀᴍᴀʟ ᴏᴘᴇʀᴀᴛɪᴏɴ.**\n\n"
+            "▸ **Sᴛᴀᴛᴜꜱ**: Oɴʟɪɴᴇ\n"
+            "▸ **Uꜱᴇʀꜱ**: Cᴀɴ ᴀᴄᴄᴇꜱꜱ ᴀʟʟ ꜰᴇᴀᴛᴜʀᴇꜱ\n"
+            "▸ **Tɪᴍᴇ**: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            parse_mode=enums.ParseMode.MARKDOWN
+        )
+        
+        # Notify all users that bot is back online
+        users = await get_all_users()
+        for user_id in users:
+            try:
+                await client.send_message(
+                    user_id,
+                    "🎉 **Bᴏᴛ Iꜱ Bᴀᴄᴋ Oɴʟɪɴᴇ!**\n\n"
+                    "✅ **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ ᴄᴏᴍᴘʟᴇᴛᴇᴅ**\n\n"
+                    "🔧 **Tʜᴇ ʙᴏᴛ ɪꜱ ɴᴏᴡ ᴀᴄᴛɪᴠᴇ ᴀɴᴅ ʀᴇᴀᴅʏ ꜰᴏʀ ᴜꜱᴇ.**\n\n"
+                    "✨ **Tʜᴀɴᴋ ʏᴏᴜ ꜰᴏʀ ʏᴏᴜʀ ᴘᴀᴛɪᴇɴᴄᴇ!**\n\n"
+                    "➤ **Yᴏᴜ ᴄᴀɴ ɴᴏᴡ ᴜꜱᴇ ᴀʟʟ ꜰᴇᴀᴛᴜʀᴇꜱ ɴᴏʀᴍᴀʟʟʏ.**",
+                    parse_mode=enums.ParseMode.MARKDOWN
+                )
+                await asyncio.sleep(0.1)  # Rate limiting
+            except:
+                continue
 
 
 # Export the maintenance check function for use in other modules
