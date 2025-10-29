@@ -1,5 +1,5 @@
-# Admins/premium.py
-from pyrogram import Client, filters
+from pyrogram import Client, filters, enums
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime, timedelta
 import re
 import asyncio
@@ -17,9 +17,25 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
         try:
             args = message.text.split()
             if len(args) != 3:
+                error_text = (
+                    "<b>❌ Usage Guide</b>\n\n"
+                    "<blockquote>"
+                    "<b>Command:</b> /addprem [user_id] [duration]\n\n"
+                    "<b>Examples:</b>\n"
+                    "/addprem 123456789 30d\n"
+                    "/addprem 123456789 12h\n"
+                    "/addprem 123456789 45m"
+                    "</blockquote>"
+                )
+                
+                keyboard = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                ])
+                
                 await message.reply_text(
-                    "Usage: /addprem [user_id] [duration]\n"
-                    "Examples: 30d, 12h, 45m"
+                    error_text,
+                    reply_markup=keyboard,
+                    parse_mode=enums.ParseMode.HTML
                 )
                 return
 
@@ -29,7 +45,25 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
             # Parse duration
             match = re.match(r"(\d+)([dhm])", duration_str)
             if not match:
-                await message.reply_text("Invalid duration format. Use days(d), hours(h), or minutes(m).")
+                error_text = (
+                    "<b>❌ Invalid Duration Format</b>\n\n"
+                    "<blockquote>"
+                    "Please use one of these formats:\n"
+                    "• <b>Days:</b> 30d, 7d, 1d\n"
+                    "• <b>Hours:</b> 24h, 12h, 1h\n"
+                    "• <b>Minutes:</b> 60m, 30m, 15m"
+                    "</blockquote>"
+                )
+                
+                keyboard = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                ])
+                
+                await message.reply_text(
+                    error_text,
+                    reply_markup=keyboard,
+                    parse_mode=enums.ParseMode.HTML
+                )
                 return
 
             num = int(match.group(1))
@@ -80,31 +114,70 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
                 upsert=True
             )
 
-            # Notify admin
-            await message.reply_text(
-                f"ᴘʀᴇᴍɪᴜᴍ ᴀᴅᴅᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴛᴏ ᴛʜᴇ ᴜꜱᴇʀ.\n"
-                f"👤 ᴜꜱᴇʀ ɴᴀᴍᴇ : {username}\n"
-                f"⚡️ ᴜꜱᴇʀ ɪᴅ : {user_id}\n"
-                f"⏰ ᴘʀᴇᴍɪᴜᴍ ᴀᴄᴄᴇꜱꜱ : {duration_str}"
+            # Notify admin with quoted style
+            admin_success_text = (
+                "<b>✅ Pʀᴇᴍɪᴜᴍ Aᴅᴅᴇᴅ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ</b>\n\n"
+                "<blockquote>"
+                f"👤 <b>Uꜱᴇʀ Nᴀᴍᴇ:</b> {username}\n"
+                f"⚡️ <b>Uꜱᴇʀ Iᴅ:</b> <code>{user_id}</code>\n"
+                f"⏰ <b>Pʀᴇᴍɪᴜᴍ Aᴄᴄᴇꜱꜱ:</b> {duration_str}\n"
+                f"📅 <b>Sᴛᴀʀᴛᴇᴅ:</b> {start_date.strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
+                f"⏳ <b>Eɴᴅꜱ:</b> {end_date.strftime('%Y-%m-%d %H:%M:%S UTC')}"
+                "</blockquote>"
             )
 
-            # Notify user
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+            ])
+
+            await message.reply_text(
+                admin_success_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
+            )
+
+            # Notify user with quoted style
             try:
+                user_success_text = (
+                    "<b>🎉 Pʀᴇᴍɪᴜᴍ Aᴅᴅᴇᴅ Tᴏ Yᴏᴜʀ Aᴄᴄᴏᴜɴᴛ!</b>\n\n"
+                    "<blockquote>"
+                    f"⏰ <b>Dᴜʀᴀᴛɪᴏɴ:</b> {duration_str}\n"
+                    f"📅 <b>Jᴏɪɴɪɴɢ Dᴀᴛᴇ:</b> {start_date.strftime('%d-%m-%Y')}\n"
+                    f"⏱️ <b>Jᴏɪɴɪɴɢ Tɪᴍᴇ:</b> {start_date.strftime('%I:%M:%S %p')}\n\n"
+                    f"⌛️ <b>Exᴘɪʀʏ Dᴀᴛᴇ:</b> {end_date.strftime('%d-%m-%Y')}\n"
+                    f"⏱️ <b>Exᴘɪʀʏ Tɪᴍᴇ:</b> {end_date.strftime('%I:%M:%S %p')}\n\n"
+                    "✨ <b>Eɴᴊᴏʏ ᴘʀᴇᴍɪᴜᴍ ꜰᴇᴀᴛᴜʀᴇꜱ!</b>"
+                    "</blockquote>"
+                )
+
+                user_keyboard = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                ])
+
                 await client.send_message(
                     chat_id=user_id,
-                    text=(
-                        f"ᴘʀᴇᴍɪᴜᴍ ᴀᴅᴅᴇᴅ ᴛᴏ ʏᴏᴜʀ ᴀᴄᴄᴏᴜɴᴛ ꜰᴏʀ {duration_str} ᴇɴᴊᴏʏ 😀\n\n"
-                        f"⏳ ᴊᴏɪɴɪɴɢ ᴅᴀᴛᴇ : {start_date.strftime('%d-%m-%Y')}\n"
-                        f"⏱️ ᴊᴏɪɴɪɴɢ ᴛɪᴍᴇ : {start_date.strftime('%I:%M:%S %p')}\n\n"
-                        f"⌛️ ᴇxᴘɪʀʏ ᴅᴀᴛᴇ : {end_date.strftime('%d-%m-%Y')}\n"
-                        f"⏱️ ᴇxᴘɪʀʏ ᴛɪᴍᴇ : {end_date.strftime('%I:%M:%S %p')}"
-                    )
+                    text=user_success_text,
+                    reply_markup=user_keyboard,
+                    parse_mode=enums.ParseMode.HTML
                 )
             except:
                 pass
 
         except Exception as e:
-            await message.reply_text(f"❌ Error: {e}")
+            error_text = (
+                "<b>❌ Eʀʀᴏʀ Aᴅᴅɪɴɢ Pʀᴇᴍɪᴜᴍ</b>\n\n"
+                f"<blockquote>{str(e)}</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+            ])
+            
+            await message.reply_text(
+                error_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
+            )
 
     # ------------- /removeprem -------------
     @app.on_message(filters.command("removeprem") & filters.user(ADMIN_IDS))
@@ -112,31 +185,109 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
         try:
             args = message.text.split()
             if len(args) != 2:
-                await message.reply_text("Usage: /removeprem [user_id]")
+                error_text = (
+                    "<b>❌ Usage Guide</b>\n\n"
+                    "<blockquote>"
+                    "<b>Command:</b> /removeprem [user_id]\n\n"
+                    "<b>Example:</b>\n"
+                    "/removeprem 123456789"
+                    "</blockquote>"
+                )
+                
+                keyboard = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                ])
+                
+                await message.reply_text(
+                    error_text,
+                    reply_markup=keyboard,
+                    parse_mode=enums.ParseMode.HTML
+                )
                 return
 
             user_id = int(args[1])
             record = premium_db.find_one({"user_id": user_id})
             if not record:
-                await message.reply_text("❌ This user is not a premium user.")
+                error_text = (
+                    "<b>❌ Uꜱᴇʀ Nᴏᴛ Fᴏᴜɴᴅ</b>\n\n"
+                    "<blockquote>"
+                    "This user is not a premium user or doesn't exist."
+                    "</blockquote>"
+                )
+                
+                keyboard = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                ])
+                
+                await message.reply_text(
+                    error_text,
+                    reply_markup=keyboard,
+                    parse_mode=enums.ParseMode.HTML
+                )
                 return
 
             premium_db.delete_one({"user_id": user_id})
             username = record.get("username", "Unknown")
 
-            await message.reply_text(
-                f"ᴘʀᴇᴍɪᴜᴍ ʀᴇᴍᴏᴠᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ.\n"
-                f"👤 ᴜꜱᴇʀ ɴᴀᴍᴇ : {username}\n"
-                f"⚡️ ᴜꜱᴇʀ ɪᴅ : {user_id}"
+            admin_success_text = (
+                "<b>✅ Pʀᴇᴍɪᴜᴍ Rᴇᴍᴏᴠᴇᴅ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ</b>\n\n"
+                "<blockquote>"
+                f"👤 <b>Uꜱᴇʀ Nᴀᴍᴇ:</b> {username}\n"
+                f"⚡️ <b>Uꜱᴇʀ Iᴅ:</b> <code>{user_id}</code>\n\n"
+                "⚠️ <b>Pʀᴇᴍɪᴜᴍ ᴀᴄᴄᴇꜱꜱ ʜᴀꜱ ʙᴇᴇɴ ʀᴇᴠᴏᴋᴇᴅ</b>"
+                "</blockquote>"
             )
 
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+            ])
+
+            await message.reply_text(
+                admin_success_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
+            )
+
+            # Notify user with quoted style
             try:
-                await client.send_message(user_id, "⚠️ Your premium access has been removed by the admin.")
+                user_notice_text = (
+                    "<b>⚠️ Pʀᴇᴍɪᴜᴍ Aᴄᴄᴇꜱꜱ Rᴇᴍᴏᴠᴇᴅ</b>\n\n"
+                    "<blockquote>"
+                    "Yᴏᴜʀ ᴘʀᴇᴍɪᴜᴍ ᴀᴄᴄᴇꜱꜱ ʜᴀꜱ ʙᴇᴇɴ ʀᴇᴍᴏᴠᴇᴅ ʙʏ ᴛʜᴇ ᴀᴅᴍɪɴ.\n\n"
+                    "▸ <b>Sᴛᴀᴛᴜꜱ:</b> Fʀᴇᴇ ᴜꜱᴇʀ\n"
+                    "▸ <b>Sᴄᴀɴꜱ:</b> Rᴇꜱᴇᴛ ᴛᴏ ʙᴀꜱɪᴄ ʟɪᴍɪᴛꜱ\n\n"
+                    "Cᴏɴᴛᴀᴄᴛ ᴀᴅᴍɪɴ ꜰᴏʀ ᴍᴏʀᴇ ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ."
+                    "</blockquote>"
+                )
+
+                user_keyboard = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                ])
+
+                await client.send_message(
+                    user_id, 
+                    user_notice_text,
+                    reply_markup=user_keyboard,
+                    parse_mode=enums.ParseMode.HTML
+                )
             except:
                 pass
 
         except Exception as e:
-            await message.reply_text(f"❌ Error: {e}")
+            error_text = (
+                "<b>❌ Eʀʀᴏʀ Rᴇᴍᴏᴠɪɴɢ Pʀᴇᴍɪᴜᴍ</b>\n\n"
+                f"<blockquote>{str(e)}</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+            ])
+            
+            await message.reply_text(
+                error_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
+            )
 
     # ------------- ENHANCED PREMIUM EXPIRY CHECKER -------------
     async def check_expired_premiums():
@@ -158,33 +309,62 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
                     username = user.get("username", "Unknown")
                     is_gifted = user.get("is_gifted", False)
 
-                    # Notify user
+                    # Notify user with quoted style
                     try:
                         if is_gifted:
-                            message_text = (
-                                "⏳ Your gifted premium subscription has ended!\n\n"
-                                "Thank you for using our premium features. "
-                                "You can still use the bot with free limits, "
-                                "or redeem another gift code to get premium again! 🎁"
+                            user_expired_text = (
+                                "<b>⏳ Gɪꜰᴛᴇᴅ Pʀᴇᴍɪᴜᴍ Exᴘɪʀᴇᴅ</b>\n\n"
+                                "<blockquote>"
+                                "Tʜᴀɴᴋ ʏᴏᴜ ꜰᴏʀ ᴜꜱɪɴɢ ᴏᴜʀ ᴘʀᴇᴍɪᴜᴍ ꜰᴇᴀᴛᴜʀᴇꜱ!\n\n"
+                                "Yᴏᴜ ᴄᴀɴ ꜱᴛɪʟʟ ᴜꜱᴇ ᴛʜᴇ ʙᴏᴛ ᴡɪᴛʜ ꜰʀᴇᴇ ʟɪᴍɪᴛꜱ,\n"
+                                "ᴏʀ ʀᴇᴅᴇᴇᴍ ᴀɴᴏᴛʜᴇʀ ɢɪꜰᴛ ᴄᴏᴅᴇ ᴛᴏ ɢᴇᴛ ᴘʀᴇᴍɪᴜᴍ ᴀɢᴀɪɴ! 🎁"
+                                "</blockquote>"
                             )
                         else:
-                            message_text = (
-                                "⏳ Your premium subscription has ended!\n\n"
-                                "Thank you for using our premium features. "
-                                "Contact admin to renew your premium access. 🚀"
+                            user_expired_text = (
+                                "<b>⏳ Pʀᴇᴍɪᴜᴍ Sᴜʙꜱᴄʀɪᴘᴛɪᴏɴ Exᴘɪʀᴇᴅ</b>\n\n"
+                                "<blockquote>"
+                                "Tʜᴀɴᴋ ʏᴏᴜ ꜰᴏʀ ᴜꜱɪɴɢ ᴏᴜʀ ᴘʀᴇᴍɪᴜᴍ ꜰᴇᴀᴛᴜʀᴇꜱ!\n\n"
+                                "Cᴏɴᴛᴀᴄᴛ ᴀᴅᴍɪɴ ᴛᴏ ʀᴇɴᴇᴡ ʏᴏᴜʀ ᴘʀᴇᴍɪᴜᴍ ᴀᴄᴄᴇꜱꜱ.\n"
+                                "Wᴇ ʜᴏᴘᴇ ᴛᴏ ꜱᴇᴇ ʏᴏᴜ ʙᴀᴄᴋ ꜱᴏᴏɴ! 🚀"
+                                "</blockquote>"
                             )
                         
-                        await app.send_message(user_id, message_text)
+                        user_keyboard = InlineKeyboardMarkup([
+                            [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                        ])
+
+                        await app.send_message(
+                            user_id, 
+                            user_expired_text,
+                            reply_markup=user_keyboard,
+                            parse_mode=enums.ParseMode.HTML
+                        )
                     except Exception as e:
                         print(f"Error notifying user {user_id}: {e}")
 
-                    # Notify admins
+                    # Notify admins with quoted style
                     for admin_id in ADMIN_IDS:
                         try:
+                            admin_expired_text = (
+                                "<b>❌ Pʀᴇᴍɪᴜᴍ Exᴘɪʀᴇᴅ</b>\n\n"
+                                "<blockquote>"
+                                f"👤 <b>Uꜱᴇʀ:</b> {username}\n"
+                                f"⚡️ <b>Iᴅ:</b> <code>{user_id}</code>\n"
+                                f"🎁 <b>Tʏᴘᴇ:</b> {'Gɪꜰᴛᴇᴅ' if is_gifted else 'Aᴅᴍɪɴ'}\n"
+                                f"⏰ <b>Exᴘɪʀᴇᴅ:</b> {now.strftime('%Y-%m-%d %H:%M:%S UTC')}"
+                                "</blockquote>"
+                            )
+
+                            admin_keyboard = InlineKeyboardMarkup([
+                                [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                            ])
+
                             await app.send_message(
                                 admin_id, 
-                                f"❌ Premium expired for {username} ({user_id})\n"
-                                f"Type: {'Gifted' if is_gifted else 'Admin'}"
+                                admin_expired_text,
+                                reply_markup=admin_keyboard,
+                                parse_mode=enums.ParseMode.HTML
                             )
                         except:
                             pass
@@ -232,13 +412,26 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
                     time_left = end_date - now
                     hours_left = time_left.total_seconds() // 3600
                     
-                    # Notify user
+                    # Notify user with quoted style
                     try:
+                        user_warning_text = (
+                            "<b>⚠️ Pʀᴇᴍɪᴜᴍ Exᴘɪʀᴀᴛɪᴏɴ Wᴀʀɴɪɴɢ</b>\n\n"
+                            "<blockquote>"
+                            f"Yᴏᴜʀ ᴘʀᴇᴍɪᴜᴍ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ ᴡɪʟʟ ᴇxᴘɪʀᴇ ɪɴ <b>{int(hours_left)} ʜᴏᴜʀꜱ</b>!\n\n"
+                            f"⏰ <b>Exᴘɪʀʏ Dᴀᴛᴇ:</b> {end_date.strftime('%Y-%m-%d %H:%M:%S UTC')}\n\n"
+                            "Rᴇɴᴇᴡ ꜱᴏᴏɴ ᴛᴏ ᴄᴏɴᴛɪɴᴜᴇ ᴇɴᴊᴏʏɪɴɢ ᴘʀᴇᴍɪᴜᴍ ꜰᴇᴀᴛᴜʀᴇꜱ! 🚀"
+                            "</blockquote>"
+                        )
+
+                        user_keyboard = InlineKeyboardMarkup([
+                            [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                        ])
+
                         await app.send_message(
                             user_id,
-                            f"⚠️ Your premium subscription will expire in {int(hours_left)} hours!\n\n"
-                            f"Expiry date: {end_date.strftime('%Y-%m-%d %H:%M:%S UTC')}\n\n"
-                            "Renew soon to continue enjoying premium features! 🚀"
+                            user_warning_text,
+                            reply_markup=user_keyboard,
+                            parse_mode=enums.ParseMode.HTML
                         )
                     except Exception as e:
                         print(f"Error warning user {user_id}: {e}")
@@ -253,6 +446,12 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
                 print(f"Error in premium expiry warning: {e}")
             
             await asyncio.sleep(3600)  # check every hour
+
+    # Close button handler
+    @app.on_callback_query(filters.regex("close_premium"))
+    async def close_premium(client, callback_query):
+        await callback_query.message.delete()
+        await callback_query.answer("Pʀᴇᴍɪᴜᴍ ɪɴꜰᴏ ᴄʟᴏꜱᴇᴅ")
 
     # Start the expiry checkers in background
     app.loop.create_task(check_expired_premiums())
