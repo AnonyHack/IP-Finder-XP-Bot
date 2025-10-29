@@ -1,6 +1,5 @@
 # keep_alive.py
 import logging
-import os
 import time
 import requests
 import threading
@@ -9,12 +8,12 @@ from config import con
 import json
 from datetime import datetime
 import socket
+import os
 
 logger = logging.getLogger(__name__)
 
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        logger.info(f"Received request for: {self.path}")
         if self.path == '/ping' or self.path == '/health':
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
@@ -29,6 +28,9 @@ class HealthHandler(BaseHTTPRequestHandler):
             bot_status = "🟢 Online"
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             port = getattr(con, 'PORT', 10000)
+            
+            # Get actual Render URL
+            render_url = os.environ.get('RENDER_EXTERNAL_URL', f'http://0.0.0.0:{port}')
             
             html_content = f"""
             <!DOCTYPE html>
@@ -152,8 +154,8 @@ class HealthHandler(BaseHTTPRequestHandler):
                         </div>
                         <p><strong>Last Updated:</strong> {current_time}</p>
                         <p><strong>Server:</strong> Render • <strong>Port:</strong> {port}</p>
-                        <p><strong>Access URL:</strong> https://your-app-name.onrender.com/</p>
-                        <p><strong>Health Check:</strong> https://your-app-name.onrender.com/health</p>
+                        <p><strong>Access URL:</strong> <a href="{render_url}" target="_blank">{render_url}</a></p>
+                        <p><strong>Health Check:</strong> <a href="{render_url}/health" target="_blank">{render_url}/health</a></p>
                     </div>
                     
                     <div class="info-grid">
@@ -243,16 +245,19 @@ class HealthHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         """Override to reduce log noise."""
-        logger.info(f"HTTP {self.command} {self.path} - {self.client_address[0]}")
+        # Remove emojis from logs to prevent encoding issues
+        message = f"{self.command} {self.path} - {self.client_address[0]}"
+        logger.info(message)
 
 def run_health_server():
     """Run a simple HTTP server to respond to health checks and display bot info."""
     try:
         port = getattr(con, 'PORT', 10000)
         server = HTTPServer(('0.0.0.0', port), HealthHandler)
-        logger.info(f"🌐 Health server started successfully on port {port}")
-        logger.info(f"🛡️ IP Tracker Bot status page: http://0.0.0.0:{port}/")
-        logger.info(f"🛡️ Health check endpoint: http://0.0.0.0:{port}/health")
+        # Use simple messages without emojis to avoid encoding issues
+        logger.info(f"Health server started successfully on port {port}")
+        logger.info(f"IP Tracker Bot status page: http://0.0.0.0:{port}/")
+        logger.info(f"Health check endpoint: http://0.0.0.0:{port}/health")
         server.serve_forever()
     except Exception as e:
         logger.error(f"Failed to start health server: {e}")
@@ -264,16 +269,3 @@ def start_keep_alive():
     health_thread = threading.Thread(target=run_health_server, daemon=True)
     health_thread.start()
     logger.info("Health server thread started")
-    
-    # Periodic pings to keep the server alive (only if running on Render)
-    if os.environ.get('RENDER', False):
-        session = requests.Session()
-        while True:
-            try:
-                # Ping the local health endpoint
-                port = getattr(con, 'PORT', 10000)
-                response = session.get(f'http://0.0.0.0:{port}/health', timeout=5)
-                logger.info(f"Keep-alive ping successful: {response.status_code}")
-            except Exception as e:
-                logger.warning(f"Keep-alive ping failed: {e}")
-            time.sleep(300)  # Ping every 5 minutes
