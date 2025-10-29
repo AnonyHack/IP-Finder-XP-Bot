@@ -1,6 +1,6 @@
 # Admins/gift.py
-from pyrogram import Client, filters
-from pyrogram.types import Message
+from pyrogram import Client, filters, enums
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime, timedelta
 import random
 import string
@@ -23,8 +23,25 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
             # Parse command arguments
             args = message.text.split()
             if len(args) < 3:
-                await message.reply_text("❌ Usage: /giftc <duration> <validity>\n\n"
-                                       "Example: /giftc 3 1h - Creates a code that gives 3 days premium, valid for 1 hour")
+                error_text = (
+                    "<b>❌ Usage Guide</b>\n\n"
+                    "<blockquote>"
+                    "<b>Command:</b> /giftc &lt;duration&gt; &lt;validity&gt;\n\n"
+                    "<b>Example:</b>\n"
+                    "/giftc 3 1h - Creates a code that gives 3 days premium, valid for 1 hour\n"
+                    "/giftc 7 2d - Creates a code that gives 7 days premium, valid for 2 days"
+                    "</blockquote>"
+                )
+                
+                keyboard = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                ])
+                
+                await message.reply_text(
+                    error_text,
+                    reply_markup=keyboard,
+                    parse_mode=enums.ParseMode.HTML
+                )
                 return
 
             premium_duration = int(args[1])
@@ -41,7 +58,25 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
                 validity_minutes = int(validity_str[:-1])
                 validity = timedelta(minutes=validity_minutes)
             else:
-                await message.reply_text("❌ Invalid validity format. Use h (hours), d (days), or m (minutes)")
+                error_text = (
+                    "<b>❌ Invalid Format</b>\n\n"
+                    "<blockquote>"
+                    "Please use one of these validity formats:\n"
+                    "• h (hours) - Example: 1h, 24h\n"
+                    "• d (days) - Example: 1d, 7d\n"
+                    "• m (minutes) - Example: 30m, 60m"
+                    "</blockquote>"
+                )
+                
+                keyboard = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                ])
+                
+                await message.reply_text(
+                    error_text,
+                    reply_markup=keyboard,
+                    parse_mode=enums.ParseMode.HTML
+                )
                 return
 
             # Generate gift code
@@ -60,23 +95,65 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
                 "is_used": False
             })
 
+            success_text = (
+                "<b>🎁 Gift Code Created!</b>\n\n"
+                "<blockquote>"
+                f"🔑 <b>Code:</b> <code>{code}</code>\n"
+                f"⭐ <b>Premium Duration:</b> {premium_duration} days\n"
+                f"⏰ <b>Valid Until:</b> {expires_at.strftime('%Y-%m-%d %H:%M:%S UTC')}\n\n"
+                "Share this code with users to redeem premium features!"
+                "</blockquote>"
+            )
+
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+            ])
+
             await message.reply_text(
-                f"🎁 Gift Code Created!\n\n"
-                f"🔑 Code: `{code}`\n"
-                f"⭐ Premium Duration: {premium_duration} days\n"
-                f"⏰ Valid Until: {expires_at.strftime('%Y-%m-%d %H:%M:%S UTC')}\n\n"
-                f"Share this code with users to redeem premium features!"
+                success_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
             )
 
         except Exception as e:
-            await message.reply_text(f"❌ Error creating gift code: {str(e)}")
+            error_text = (
+                "<b>❌ Error Creating Gift Code</b>\n\n"
+                f"<blockquote>{str(e)}</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+            ])
+            
+            await message.reply_text(
+                error_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
+            )
 
     @app.on_message(filters.command("redeem"))
     async def redeem_gift_code(client: Client, message: Message):
         try:
             args = message.text.split()
             if len(args) < 2:
-                await message.reply_text("❌ Usage: /redeem <gift_code>")
+                error_text = (
+                    "<b>❌ Usage Guide</b>\n\n"
+                    "<blockquote>"
+                    "<b>Command:</b> /redeem &lt;gift_code&gt;\n\n"
+                    "<b>Example:</b>\n"
+                    "/redeem ABC123XYZ456"
+                    "</blockquote>"
+                )
+                
+                keyboard = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                ])
+                
+                await message.reply_text(
+                    error_text,
+                    reply_markup=keyboard,
+                    parse_mode=enums.ParseMode.HTML
+                )
                 return
 
             code = args[1].upper()
@@ -85,11 +162,43 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
             gift_code = gift_codes_collection.find_one({"code": code, "is_used": False})
             
             if not gift_code:
-                await message.reply_text("❌ Invalid or already used gift code!")
+                error_text = (
+                    "<b>❌ Invalid Gift Code</b>\n\n"
+                    "<blockquote>"
+                    "This gift code is either invalid or has already been used.\n"
+                    "Please check the code and try again."
+                    "</blockquote>"
+                )
+                
+                keyboard = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                ])
+                
+                await message.reply_text(
+                    error_text,
+                    reply_markup=keyboard,
+                    parse_mode=enums.ParseMode.HTML
+                )
                 return
             
             if gift_code["expires_at"] < datetime.utcnow():
-                await message.reply_text("❌ This gift code has expired!")
+                error_text = (
+                    "<b>❌ Expired Gift Code</b>\n\n"
+                    "<blockquote>"
+                    "This gift code has expired and can no longer be used.\n"
+                    "Please contact admin for a new code."
+                    "</blockquote>"
+                )
+                
+                keyboard = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                ])
+                
+                await message.reply_text(
+                    error_text,
+                    reply_markup=keyboard,
+                    parse_mode=enums.ParseMode.HTML
+                )
                 return
 
             user_id = message.from_user.id
@@ -104,6 +213,7 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
                     {"user_id": user_id},
                     {"$set": {"end_date": new_end_date}}
                 )
+                end_date = new_end_date
             else:
                 # Create new premium entry
                 start_date = datetime.utcnow()
@@ -126,15 +236,40 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
                 }}
             )
 
+            success_text = (
+                "<b>🎉 Gift Code Redeemed Successfully!</b>\n\n"
+                "<blockquote>"
+                f"⭐ <b>Premium Duration:</b> {gift_code['premium_duration']} days\n"
+                f"⏰ <b>Valid Until:</b> {end_date.strftime('%Y-%m-%d %H:%M:%S UTC')}\n\n"
+                "Enjoy your premium features! 🚀"
+                "</blockquote>"
+            )
+
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+            ])
+
             await message.reply_text(
-                f"🎉 Gift code redeemed successfully!\n\n"
-                f"⭐ You now have premium for {gift_code['premium_duration']} days!\n"
-                f"⏰ Premium valid until: {end_date.strftime('%Y-%m-%d %H:%M:%S UTC')}\n\n"
-                f"Enjoy your premium features! 🚀"
+                success_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
             )
 
         except Exception as e:
-            await message.reply_text(f"❌ Error redeeming gift code: {str(e)}")
+            error_text = (
+                "<b>❌ Error Redeeming Gift Code</b>\n\n"
+                f"<blockquote>{str(e)}</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+            ])
+            
+            await message.reply_text(
+                error_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
+            )
 
     @app.on_message(filters.command("giftcodes") & filters.user(ADMIN_IDS))
     async def list_gift_codes(client: Client, message: Message):
@@ -142,23 +277,68 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
             codes = list(gift_codes_collection.find().sort("created_at", -1).limit(10))
             
             if not codes:
-                await message.reply_text("No gift codes created yet.")
+                empty_text = (
+                    "<b>🎁 Gift Codes</b>\n\n"
+                    "<blockquote>"
+                    "No gift codes created yet.\n"
+                    "Use /giftc to create your first gift code!"
+                    "</blockquote>"
+                )
+                
+                keyboard = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                ])
+                
+                await message.reply_text(
+                    empty_text,
+                    reply_markup=keyboard,
+                    parse_mode=enums.ParseMode.HTML
+                )
                 return
             
-            text = "🎁 Recent Gift Codes:\n\n"
+            text = "<b>🎁 Recent Gift Codes</b>\n\n<blockquote>"
             for code in codes:
                 status = "✅ Used" if code["is_used"] else "🟢 Active" if code["expires_at"] > datetime.utcnow() else "❌ Expired"
                 used_by = f" by user {code['used_by']}" if code["is_used"] else ""
                 
                 text += (
-                    f"🔑 Code: `{code['code']}`\n"
-                    f"⭐ Duration: {code['premium_duration']} days\n"
-                    f"⏰ Valid until: {code['expires_at'].strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
-                    f"📊 Status: {status}{used_by}\n"
+                    f"🔑 <b>Code:</b> <code>{code['code']}</code>\n"
+                    f"⭐ <b>Duration:</b> {code['premium_duration']} days\n"
+                    f"⏰ <b>Valid until:</b> {code['expires_at'].strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
+                    f"📊 <b>Status:</b> {status}{used_by}\n"
                     f"────────────────────\n"
                 )
             
-            await message.reply_text(text)
+            text += "</blockquote>"
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+            ])
+            
+            await message.reply_text(
+                text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
+            )
             
         except Exception as e:
-            await message.reply_text(f"❌ Error listing gift codes: {str(e)}")
+            error_text = (
+                "<b>❌ Error Listing Gift Codes</b>\n\n"
+                f"<blockquote>{str(e)}</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+            ])
+            
+            await message.reply_text(
+                error_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
+            )
+
+    # Handle close button for gift messages
+    @app.on_callback_query(filters.regex("close_gift"))
+    async def close_gift(client, callback_query):
+        await callback_query.message.delete()
+        await callback_query.answer("Gift info closed")
