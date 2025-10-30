@@ -29,7 +29,7 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
                 )
                 
                 keyboard = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                    [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_premium")]
                 ])
                 
                 await message.reply_text(
@@ -56,7 +56,7 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
                 )
                 
                 keyboard = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                    [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_premium")]
                 ])
                 
                 await message.reply_text(
@@ -127,7 +127,7 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
             )
 
             keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_premium")]
             ])
 
             await message.reply_text(
@@ -151,7 +151,7 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
                 )
 
                 user_keyboard = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                    [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_premium")]
                 ])
 
                 await client.send_message(
@@ -170,7 +170,7 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
             )
             
             keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_premium")]
             ])
             
             await message.reply_text(
@@ -195,7 +195,7 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
                 )
                 
                 keyboard = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                    [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_premium")]
                 ])
                 
                 await message.reply_text(
@@ -216,7 +216,7 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
                 )
                 
                 keyboard = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                    [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_premium")]
                 ])
                 
                 await message.reply_text(
@@ -239,7 +239,7 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
             )
 
             keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_premium")]
             ])
 
             await message.reply_text(
@@ -261,7 +261,7 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
                 )
 
                 user_keyboard = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                    [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_premium")]
                 ])
 
                 await client.send_message(
@@ -280,7 +280,7 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
             )
             
             keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_premium")]
             ])
             
             await message.reply_text(
@@ -331,7 +331,7 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
                             )
                         
                         user_keyboard = InlineKeyboardMarkup([
-                            [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                            [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_premium")]
                         ])
 
                         await app.send_message(
@@ -357,7 +357,7 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
                             )
 
                             admin_keyboard = InlineKeyboardMarkup([
-                                [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_premium")]
                             ])
 
                             await app.send_message(
@@ -424,7 +424,7 @@ def register_premium_commands(app: Client, db, ADMIN_IDS):
                         )
 
                         user_keyboard = InlineKeyboardMarkup([
-                            [InlineKeyboardButton("❌ Cʟᴏꜱᴇ", callback_data="close_premium")]
+                            [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_premium")]
                         ])
 
                         await app.send_message(
