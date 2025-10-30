@@ -5,8 +5,6 @@ import asyncio
 import threading
 import time
 
-from telegram import CallbackQuery
-
 # Global maintenance state
 maintenance_mode = False
 maintenance_message = "🚧 Tʜᴇ Bᴏᴛ ɪꜱ Cᴜʀʀᴇɴᴛʟʏ Uɴᴅᴇʀ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ, Pʟᴇᴀꜱᴇ ᴛʀʏ ᴀɢᴀɪɴ Lᴀᴛᴇʀ."
@@ -407,4 +405,5 @@ async def get_maintenance_message():
     """Get the current maintenance message"""
     global maintenance_message
     return maintenance_message
+
 
