@@ -7,6 +7,7 @@ import config
 from XP_TOOLS.leaderboard import increment_search
 from Admins.user_management import is_user_banned
 from Admins.maintenance import check_maintenance_mode as is_maintenance_mode, get_maintenance_message
+from imagen import send_notification
 
 def register_ip_scanner(app: Client, db, is_user_member=None, ask_user_to_join=None):
     ip_data = {}
@@ -22,18 +23,39 @@ def register_ip_scanner(app: Client, db, is_user_member=None, ask_user_to_join=N
     async def get_ip(client: Client, message: Message):
         user_id = message.from_user.id
 
-                # Check if maintenance mode is active
+                # Send a notification after user starts the bot
+        try:
+            username = message.from_user.username or "NoUsername"
+            await send_notification(client, message.from_user.id, username, "Scanned IP")
+        except Exception as e:
+            print(f"Notification failed: {e}")  # Don't break the bot if notification fails
+
+
+        # Check if maintenance mode is active
         if await is_maintenance_mode():
             maintenance_msg = await get_maintenance_message()
-            await message.reply_text(
-                f"🚧 **Maintenance Mode Active**\n\n{maintenance_msg}\n\n"
+            # Maintenance message with close button and quoted style
+            text = (
+                "<b>🚧 Maintenance Mode Active</b>\n\n"
+                "<blockquote>"
+                f"{maintenance_msg}\n\n"
                 f"⏰ Please try again later.\n"
-                f"📞 Contact: @Am_ItachiUchiha for updates",
-                parse_mode="Markdown"
+                f"📞 Contact: @Am_ItachiUchiha for updates"
+                "</blockquote>"
+            )
+            
+            buttons = InlineKeyboardMarkup([
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_maintenance")]
+            ])
+            
+            await message.reply_text(
+                text,
+                reply_markup=buttons,
+                parse_mode=enums.ParseMode.HTML
             )
             return
 
-                # Check if user is banned
+        # Check if user is banned
         if await is_user_banned(db, user_id):
             await message.reply_text("🚫 You have been banned from using this bot.")
             return
@@ -106,12 +128,34 @@ def register_ip_scanner(app: Client, db, is_user_member=None, ask_user_to_join=N
                 ip.details.get('country_flag', {}).get('emoji', None)
             ]
 
-            # Inline buttons
+            # IP info message in quoted style
+            caption = (
+                "<b>🍀 Location Found 🔎</b>\n\n"
+                "<blockquote>"
+                f"🛰 <b>IP Address:</b> <code>{x[0]}</code>\n"
+                f"🌎 <b>Country:</b> {x[1]} {x[12]}\n"
+                f"💠 <b>Continent:</b> {x[2]}\n"
+                f"🗺 <b>Province:</b> {x[3]}\n"
+                f"🏠 <b>City:</b> {x[4]}\n"
+                f"✉️ <b>Postal Code:</b> <code>{x[5]}</code>\n"
+                f"🗼 <b>Internet Provider:</b> {x[11]}\n"
+                f"🕢 <b>Time Zone:</b> {x[6]}\n"
+                f"〽️ <b>Location:</b> <code>{x[9]}</code>\n"
+                f"💰 <b>Currency:</b> {x[10]}\n"
+                f"⏳ <b>Scans Left:</b> {scans_left}\n\n"
+                f"🔥 <i>Powered By @XPTOOLSTEAM</i>"
+                "</blockquote>"
+            )
+
+            # Inline buttons with close button
             inline_keyboard = InlineKeyboardMarkup([
                 [InlineKeyboardButton(
                     '✈️ Open Google Map 🌎',
                     url=f'https://www.google.com/maps/search/?api=1&query={x[7]}%2C{x[8]}')],
-                [InlineKeyboardButton('🤖 IP ҒIΠDΣR BOT', url=config.con.BOT_URL)]
+                [
+                    InlineKeyboardButton('🤖 IP ҒIΠDΣR BOT', url=config.con.BOT_URL),
+                    InlineKeyboardButton('⌧ ᴄʟᴏꜱᴇ ⌧', callback_data='close_ip_info')
+                ]
             ])
 
             # Generate map image URL
@@ -124,38 +168,28 @@ def register_ip_scanner(app: Client, db, is_user_member=None, ask_user_to_join=N
                 await app.send_photo(
                     chat_id=message.chat.id,
                     photo=url,
-                    caption=f"🍀 Location Found 🔎\n\n"
-                            f"🛰IP Address ➤ {x[0]}\n"
-                            f"🌎Country ➤ {x[1]}{x[12]}\n"
-                            f"💠Continent ➤ {x[2]}\n"
-                            f"🗺Province ➤ {x[3]}\n"
-                            f"🏠City ➤ {x[4]}\n"
-                            f"✉️ Postal Code ➤ <code>{x[5]}</code>\n"
-                            f"🗼Internet Provider ➤ {x[11]}\n"
-                            f"🕢Time Zone ➤ {x[6]}\n"
-                            f"〽️Location ➤ <code>{x[9]}</code>\n"
-                            f"💰 Currency ➤ {x[10]}\n\n"
-                            f"🔥Powered By @Megahubbots 🇱🇰\n"
-                            f"⏳ Scans Left: {scans_left}",
-                    reply_markup=inline_keyboard
+                    caption=caption,
+                    reply_markup=inline_keyboard,
+                    parse_mode=enums.ParseMode.HTML
                 )
             except:
                 await app.send_message(
                     chat_id=message.chat.id,
-                    text=f"🍀 Location Found 🔎\n\n"
-                         f"🛰IP Address ➤ {x[0]}\n"
-                         f"🌎Country ➤ {x[1]}{x[12]}\n"
-                         f"💠Continent ➤ {x[2]}\n"
-                         f"🗺Province ➤ {x[3]}\n"
-                         f"🏠City ➤ {x[4]}\n"
-                         f"✉️ Postal Code ➤ <code>{x[5]}</code>\n"
-                         f"🗼Internet Provider ➤ {x[11]}\n"
-                         f"🕢Time Zone ➤ {x[6]}\n"
-                         f"〽️Location ➤ <code>{x[9]}</code>\n"
-                         f"💰 Currency ➤ {x[10]}\n\n"
-                         f"🔥Powered By @Megahubbots 🇱🇰\n"
-                         f"⏳ Scans Left: {scans_left}",
-                    reply_markup=inline_keyboard
+                    text=caption,
+                    reply_markup=inline_keyboard,
+                    parse_mode=enums.ParseMode.HTML
                 )
         except ValueError:
             return
+
+    # Handle close button for maintenance message
+    @app.on_callback_query(filters.regex("close_maintenance"))
+    async def close_maintenance(client, callback_query):
+        await callback_query.message.delete()
+        await callback_query.answer("Maintenance info closed")
+
+    # Handle close button for IP info message
+    @app.on_callback_query(filters.regex("close_ip_info"))
+    async def close_ip_info(client, callback_query):
+        await callback_query.message.delete()
+        await callback_query.answer("IP info closed")
