@@ -1,5 +1,5 @@
 from pyrogram import Client, filters, enums
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, CallbackQuery
 from datetime import datetime, timedelta
 import asyncio
 import threading
@@ -407,3 +407,4 @@ async def get_maintenance_message():
     """Get the current maintenance message"""
     global maintenance_message
     return maintenance_message
+
