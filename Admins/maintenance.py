@@ -5,6 +5,8 @@ import asyncio
 import threading
 import time
 
+from telegram import CallbackQuery
+
 # Global maintenance state
 maintenance_mode = False
 maintenance_message = "🚧 Tʜᴇ Bᴏᴛ ɪꜱ Cᴜʀʀᴇɴᴛʟʏ Uɴᴅᴇʀ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ, Pʟᴇᴀꜱᴇ ᴛʀʏ ᴀɢᴀɪɴ Lᴀᴛᴇʀ."
@@ -54,11 +56,11 @@ def register_maintenance_commands(app: Client, db, ADMIN_IDS):
                 # Enable maintenance mode setup - ask for message
                 maintenance_setup_state[message.from_user.id] = True
 
-                # Create cancel button
-                cancel_markup = ReplyKeyboardMarkup(
-                    [[KeyboardButton("❌ Cᴀɴᴄᴇʟ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ")]],
-                    resize_keyboard=True,
-                    one_time_keyboard=True
+                # Create inline cancel button
+                cancel_markup = InlineKeyboardMarkup(
+                    [
+                        [InlineKeyboardButton("❌ Cᴀɴᴄᴇʟ Mᴀɪɴᴛᴇɴᴀɴᴄᴇ", callback_data="cancel_maintenance")]
+                    ]
                 )
 
                 await message.reply_text(
@@ -70,6 +72,22 @@ def register_maintenance_commands(app: Client, db, ADMIN_IDS):
                     parse_mode=enums.ParseMode.MARKDOWN,
                     reply_markup=cancel_markup
                 )
+
+
+    # ------------- Cancel Maintenance Callback -------------
+    @app.on_callback_query(filters.regex("cancel_maintenance"))
+    async def cancel_maintenance_callback(client: Client, callback_query: CallbackQuery):
+        user_id = callback_query.from_user.id
+
+        if user_id in maintenance_setup_state:
+            del maintenance_setup_state[user_id]
+
+        await callback_query.message.edit_text(
+            "❌ **Mᴀɪɴᴛᴇɴᴀɴᴄᴇ Sᴇᴛᴜᴘ Cᴀɴᴄᴇʟʟᴇᴅ.**\n\n"
+            "🟢 **Nᴏ ᴄʜᴀɴɢᴇꜱ ʜᴀᴠᴇ ʙᴇᴇɴ ᴍᴀᴅᴇ.**",
+            parse_mode=enums.ParseMode.MARKDOWN
+        )
+
 
     async def process_maintenance_message(client: Client, message: Message, maintenance_msg_text: str):
         """Process the maintenance message and show confirmation"""
