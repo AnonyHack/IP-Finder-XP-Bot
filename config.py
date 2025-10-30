@@ -29,10 +29,10 @@ class config:
     
     BOT_URL = getenv("BOT_URL", "https://t.me/IpTrackerxpbot")
     SCANS_LIMIT = 5  # free daily scans, can change later
-    PREMIUM_SCANS = 50  # premium daily scans, can change later
+    PREMIUM_SCANS = 100  # premium daily scans, can change later
 
     # Media & Links
-    START_PHOTO_URL = getenv("START_PHOTO_URL", "https://i.ibb.co/C5x5KCdn/LG.jpg")
+    START_PHOTO_URL = getenv("START_PHOTO_URL", "https://i.ibb.co/BXSX8N0/iplogo.jpg")
     BOT_GUIDE_VIDEO_URL = getenv("BOT_GUIDE_VIDEO_URL", "https://youtube.com/@FREENETHUBTECH")
     BOT_DEVELOPER = getenv("BOT_DEVELOPER", "https://t.me/Am_ItachiUchiha")
     POWERED_BY = getenv("POWERED_BY", "https://t.me/XPTOOLSTEAM")
