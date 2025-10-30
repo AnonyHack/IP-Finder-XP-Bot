@@ -1,5 +1,5 @@
 # XP_TOOLS/inline_scanner.py
-from pyrogram import Client
+from pyrogram import Client, enums, filters
 from pyrogram.types import (
     InlineQuery, InlineQueryResultPhoto, InlineKeyboardMarkup,
     InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
@@ -32,9 +32,13 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
                 InlineQueryResultArticle(
                     title="Maintenance Mode Active",
                     input_message_content=InputTextMessageContent(
-                        f"🚧 Maintenance Mode Active\n\n{maintenance_msg}\n\n"
+                        "<b>🚧 Maintenance Mode Active</b>\n\n"
+                        "<blockquote>"
+                        f"{maintenance_msg}\n\n"
                         f"⏰ Please try again later.\n"
-                        f"📞 Contact: {config.con.BOT_DEVELOPER} for updates"
+                        f"📞 Contact: {getattr(config.con, 'BOT_DEVELOPER', 'https://t.me/Am_ItachiUchiha')} for updates"
+                        "</blockquote>",
+                        parse_mode=enums.ParseMode.HTML
                     ),
                     description="Bot is under maintenance",
                     thumb_url="https://img.icons8.com/fluency/48/maintenance.png"
@@ -48,7 +52,12 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
                 InlineQueryResultArticle(
                     title="Banned User",
                     input_message_content=InputTextMessageContent(
-                        "🚫 You have been banned from using this bot."
+                        "<b>🚫 Account Banned</b>\n\n"
+                        "<blockquote>"
+                        "You have been banned from using this bot.\n"
+                        "Contact admin for more information."
+                        "</blockquote>",
+                        parse_mode=enums.ParseMode.HTML
                     ),
                     description="You are not allowed to use this bot",
                     thumb_url="https://img.icons8.com/fluency/48/error.png"
@@ -62,8 +71,12 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
                 InlineQueryResultArticle(
                     title="Join Required Channels",
                     input_message_content=InputTextMessageContent(
-                        "🚨 To use this bot, you must join our channels first! "
+                        "<b>🚨 Join Required</b>\n\n"
+                        "<blockquote>"
+                        "To use this bot, you must join our channels first!\n"
                         "Please start a chat with the bot to get the links."
+                        "</blockquote>",
+                        parse_mode=enums.ParseMode.HTML
                     ),
                     description="Click to see instructions",
                     thumb_url="https://img.icons8.com/fluency/48/error.png"
@@ -96,7 +109,12 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
                 InlineQueryResultArticle(
                     title="Daily Limit Reached",
                     input_message_content=InputTextMessageContent(
-                        f"⚠️ {'Premium' if is_premium else 'Daily'} scan limit reached ({scans_limit})."
+                        f"<b>⚠️ Limit Reached</b>\n\n"
+                        f"<blockquote>"
+                        f"{'Premium' if is_premium else 'Daily'} scan limit reached ({scans_limit}).\n"
+                        f"Contact admin to upgrade your plan."
+                        f"</blockquote>",
+                        parse_mode=enums.ParseMode.HTML
                     ),
                     description="You have no scans left",
                     thumb_url="https://img.icons8.com/fluency/48/error.png"
@@ -140,6 +158,31 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
                 ip.details.get('org', None), ip.details.get('country_flag', {}).get('emoji', None)
             ]
 
+            # Get URLs from config with fallbacks
+            bot_developer = getattr(config.con, "BOT_DEVELOPER", "https://t.me/Am_ItachiUchiha")
+            powered_by = getattr(config.con, "POWERED_BY", "https://t.me/XPTOOLSTEAM")
+            bot_url = getattr(config.con, "BOT_URL", "https://t.me/XPToolsBot")
+
+            # IP info message in quoted style
+            caption = (
+                "<b>🍀 Location Found 🔎</b>\n\n"
+                "<blockquote>"
+                f"🛰 <b>IP Address:</b> <code>{x[0]}</code>\n"
+                f"🌎 <b>Country:</b> {x[1]} {x[12]}\n"
+                f"💠 <b>Continent:</b> {x[2]}\n"
+                f"🗺 <b>Province:</b> {x[3]}\n"
+                f"🏠 <b>City:</b> {x[4]}\n"
+                f"✉️ <b>Postal Code:</b> <code>{x[5]}</code>\n"
+                f"🗼 <b>Internet Provider:</b> {x[11]}\n"
+                f"🕢 <b>Time Zone:</b> {x[6]}\n"
+                f"〽️ <b>Location:</b> <code>{x[9]}</code>\n"
+                f"💰 <b>Currency:</b> {x[10]}\n"
+                f"⏳ <b>Scans Left:</b> {scans_left}\n\n"
+                f"📞 <b>Developer:</b> <a href='{bot_developer}'>Link</a>\n"
+                "❗ <i>NOTE: This info is approximate and may not be 100% accurate.</i>"
+                "</blockquote>"
+            )
+
             results = [
                 InlineQueryResultPhoto(
                     photo_url="https://i.ibb.co/C5x5KCdn/LG.jpg",
@@ -147,24 +190,15 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
                     thumb_url="https://i.ibb.co/C5x5KCdn/LG.jpg",
                     title='🌎 Inline Share Location 🔎',
                     description=f"🍀 Location Found : {x[0]}",
-                    caption=f"🍀 Location Found 🔎\n\n"
-                            f"🛰IP Address ➤ {x[0]}\n"
-                            f"🌎Country ➤ {x[1]}{x[12]}\n"
-                            f"💠Continent ➤ {x[2]}\n"
-                            f"🗺Province ➤ {x[3]}\n"
-                            f"🏠City ➤ {x[4]}\n"
-                            f"✉️ Postal Code ➤ <code>{x[5]}</code>\n"
-                            f"🗼Internet Provider ➤ {x[11]}\n"
-                            f"🕢Time Zone ➤ {x[6]}\n"
-                            f"〽️Location ➤ <code>{x[9]}</code>\n"
-                            f"💰 Currency ➤ {x[10]}\n\n"
-                            f"👨‍💻 Developer: {config.con.BOT_DEVELOPER}\n"
-                            f"👨‍💻 Powered By: {config.con.POWERED_BY}\n"
-                            f"⏳ Scans Left: {scans_left}",
+                    caption=caption,
+                    parse_mode=enums.ParseMode.HTML,
                     reply_markup=InlineKeyboardMarkup([
-                        [InlineKeyboardButton("👨‍💻 Developer", url=config.con.BOT_DEVELOPER)],
-                        [InlineKeyboardButton("👨‍💻 Powered By", url=config.con.POWERED_BY)],
-                        [InlineKeyboardButton("🤖 Start Bot", url=config.con.BOT_URL)]
+                        [InlineKeyboardButton("👨‍💻 ᴅᴇᴠᴇʟᴏᴘᴇʀ", url=bot_developer)],
+                        [InlineKeyboardButton("⚡ ᴘᴏᴡᴇʀᴇᴅ ʙʏ", url=powered_by)],
+                        [
+                            InlineKeyboardButton("🤖 ꜱᴛᴀʀᴛ ʙᴏᴛ", url=bot_url),
+                            InlineKeyboardButton("🗑️ ᴄʟᴏꜱᴇ", callback_data="close_inline")
+                        ]
                     ])
                 )
             ]
@@ -173,3 +207,23 @@ def register_inline_scanner(app: Client, db, is_user_member=None, ask_user_to_jo
 
         except ValueError:
             pass
+
+    # Handle close button for inline results - FIXED VERSION
+    @app.on_callback_query(filters.regex("close_inline"))
+    async def close_inline(client, callback_query):
+        try:
+            # For inline messages, we need to edit the message instead of deleting it
+            if callback_query.message:
+                await callback_query.message.delete()
+            else:
+                # For inline queries, we can only edit the message to show it's closed
+                await callback_query.edit_message_text(
+                    "🗑️ Message closed",
+                    reply_markup=InlineKeyboardMarkup([
+                        [InlineKeyboardButton("🤖 ꜱᴛᴀʀᴛ ʙᴏᴛ", url=getattr(config.con, "BOT_URL", "https://t.me/XPToolsBot"))]
+                    ])
+                )
+            await callback_query.answer("Message closed")
+        except Exception as e:
+            # If we can't delete or edit, just answer the callback
+            await callback_query.answer("Message closed")
