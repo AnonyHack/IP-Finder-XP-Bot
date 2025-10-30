@@ -122,8 +122,8 @@ def register_handlers():
         traceback.print_exc()
         sys.exit(1)
 
-# Simple health check server - REPLACE THIS SECTION IN YOUR main.py
-from keep_alive import start_keep_alive
+# Import only the health server function, not the keep-alive with infinite loop
+from keep_alive import run_health_server
 
 if __name__ == '__main__':
     print("🚀 Starting IP Tracker Bot...")
@@ -131,8 +131,10 @@ if __name__ == '__main__':
     print(f"🔑 BOT_TOKEN present: {bool(config.con.BOT_TOKEN)}")
     print(f"🗄️ MONGO_URI present: {bool(config.con.MONGO_URI)}")
     
-    # Start keep alive system (health server + pinging)
-    start_keep_alive()
+    # Start health server in a separate thread (without the infinite ping loop)
+    health_thread = threading.Thread(target=run_health_server, daemon=True)
+    health_thread.start()
+    print("✅ Health server started in separate thread")
     
     # Register handlers and start bot
     register_handlers()
