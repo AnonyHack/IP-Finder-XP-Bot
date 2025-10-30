@@ -77,7 +77,7 @@ def register_stats_handler(app: Client):
             ],
             [
                 InlineKeyboardButton("🎁 Gifts", callback_data="stats_gifts"),
-                InlineKeyboardButton("❌ Close", callback_data="close_stats")
+                InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_stats")
             ]
         ])
 
@@ -119,8 +119,8 @@ def register_stats_handler(app: Client):
         )
 
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("⬅️ Back", callback_data="stats_main")],
-            [InlineKeyboardButton("❌ Close", callback_data="close_stats")]
+            [InlineKeyboardButton("⌫ ʙᴀᴄᴋ", callback_data="stats_main")],
+            [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_stats")]
         ])
 
         await message.edit_text(text, reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
@@ -176,8 +176,8 @@ def register_stats_handler(app: Client):
         )
 
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("⬅️ Back", callback_data="stats_main")],
-            [InlineKeyboardButton("❌ Close", callback_data="close_stats")]
+            [InlineKeyboardButton("⌫ ʙᴀᴄᴋ", callback_data="stats_main")],
+            [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_stats")]
         ])
 
         await message.edit_text(text, reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
@@ -204,8 +204,8 @@ def register_stats_handler(app: Client):
         )
 
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("⬅️ Back", callback_data="stats_main")],
-            [InlineKeyboardButton("❌ Close", callback_data="close_stats")]
+            [InlineKeyboardButton("⌫ ʙᴀᴄᴋ", callback_data="stats_main")],
+            [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_stats")]
         ])
 
         await message.edit_text(text, reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
