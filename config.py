@@ -14,7 +14,7 @@ class config:
     BOT_TOKEN = getenv("BOT_TOKEN", "")
     IP_API = getenv("ACCESS_TOKEN", "") # get your free token from ipgeolocation.io
     MONGO_URI = getenv("MONGO_URI", "")
-    MONGO_DB = getenv("MONGO_DB", "ipfindertest")
+    MONGO_DB = getenv("MONGO_DB", "ipfinderxpbot")
     USERS_COLLECTION = getenv("USERS_COLLECTION", "users")
 
     # --- ADMIN_USER_IDS: list of ints, works with or without quotes, ignores spaces ---
@@ -27,7 +27,7 @@ class config:
         except ValueError:
             ADMIN_USER_IDS = []  # fallback if any invalid
     
-    BOT_URL = getenv("BOT_URL", "https://t.me/IpTrackertestbot")
+    BOT_URL = getenv("BOT_URL", "https://t.me/IpTrackerxpbot")
     SCANS_LIMIT = 5  # free daily scans, can change later
     PREMIUM_SCANS = 50  # premium daily scans, can change later
 
@@ -41,7 +41,7 @@ class config:
     # Add required channels for force join
     REQUIRED_CHANNELS = [
         {"label": "📢 Bot Updates", "url": "https://t.me/XPTOOLSTEAM", "chat": "@XPTOOLSTEAM"},
-       # {"label": "📢 Promoter Channel", "url": "https://t.me/Freenethubz", "chat": "@Freenethubz"}
+        {"label": "📢 Promoter Channel", "url": "https://t.me/Freenethubz", "chat": "@Freenethubz"}
     ]
 
     # Add validation for required credentials
