@@ -34,7 +34,7 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
                 )
                 
                 keyboard = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                    [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_gift")]
                 ])
                 
                 await message.reply_text(
@@ -69,7 +69,7 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
                 )
                 
                 keyboard = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                    [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_gift")]
                 ])
                 
                 await message.reply_text(
@@ -106,7 +106,7 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
             )
 
             keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_gift")]
             ])
 
             await message.reply_text(
@@ -122,7 +122,7 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
             )
             
             keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_gift")]
             ])
             
             await message.reply_text(
@@ -146,7 +146,7 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
                 )
                 
                 keyboard = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                    [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_gift")]
                 ])
                 
                 await message.reply_text(
@@ -171,7 +171,7 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
                 )
                 
                 keyboard = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                    [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_gift")]
                 ])
                 
                 await message.reply_text(
@@ -191,7 +191,7 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
                 )
                 
                 keyboard = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                    [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_gift")]
                 ])
                 
                 await message.reply_text(
@@ -246,7 +246,7 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
             )
 
             keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_gift")]
             ])
 
             await message.reply_text(
@@ -262,7 +262,7 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
             )
             
             keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_gift")]
             ])
             
             await message.reply_text(
@@ -286,7 +286,7 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
                 )
                 
                 keyboard = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                    [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_gift")]
                 ])
                 
                 await message.reply_text(
@@ -312,7 +312,7 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
             text += "</blockquote>"
             
             keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_gift")]
             ])
             
             await message.reply_text(
@@ -328,7 +328,7 @@ def register_gift_commands(app: Client, db, ADMIN_IDS):
             )
             
             keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌ Close", callback_data="close_gift")]
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_gift")]
             ])
             
             await message.reply_text(
