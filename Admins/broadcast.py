@@ -1,6 +1,6 @@
 # Admins/broadcast.py
 from pyrogram import Client, filters, enums
-from pyrogram.types import Message
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime
 import asyncio
 
@@ -16,7 +16,22 @@ def register_broadcast_command(app: Client, db, ADMIN_IDS):
         """Process and send the broadcast message"""
         users = await get_all_users()
         if not users:
-            await original_message.reply_text("❌ No users found to broadcast to")
+            error_text = (
+                "<b>❌ Nᴏ Uꜱᴇʀꜱ Fᴏᴜɴᴅ</b>\n\n"
+                "<blockquote>"
+                "Tʜᴇʀᴇ ᴀʀᴇ ɴᴏ ᴜꜱᴇʀꜱ ɪɴ ᴛʜᴇ ᴅᴀᴛᴀʙᴀꜱᴇ ᴛᴏ ʙʀᴏᴀᴅᴄᴀꜱᴛ ᴛᴏ."
+                "</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_broadcast")]
+            ])
+            
+            await original_message.reply_text(
+                error_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
+            )
             return
         
         success = 0
@@ -25,20 +40,24 @@ def register_broadcast_command(app: Client, db, ADMIN_IDS):
         pinned_failed = 0
         
         # Enhanced sending notification with progress bar
+        progress_text = (
+            "<b>📨 Bʀᴏᴀᴅᴄᴀꜱᴛ Iɴɪᴛɪᴀᴛᴇᴅ</b>\n\n"
+            "<blockquote>"
+            f"📊 <b>Tᴏᴛᴀʟ Rᴇᴄɪᴘɪᴇɴᴛꜱ:</b> <code>{len(users)}</code>\n"
+            f"⏳ <b>Sᴛᴀᴛᴜꜱ:</b> Pʀᴏᴄᴇꜱꜱɪɴɢ...\n"
+            f"📈 <b>Pʀᴏɢʀᴇꜱꜱ:</b> [░░░░░░░░░░] 0%"
+            "</blockquote>"
+        )
+        
         progress_msg = await original_message.reply_text(
-            f"""📨 <b>Broadcast Initiated</b>
-            
-📊 Total Recipients: <code>{len(users)}</code>
-⏳ Status: <i>Processing...</i>
-
-[░░░░░░░░░░] 0%""",
+            progress_text,
             parse_mode=enums.ParseMode.HTML
         )
         
         # Calculate update interval
         update_interval = max(1, len(users) // 10)
         
-        broadcast_type = "📌 PINNED" if pin_message else "📢 NORMAL"
+        broadcast_type = "📌 Pɪɴɴᴇᴅ" if pin_message else "📢 Nᴏʀᴍᴀʟ"
         
         for index, user_id in enumerate(users):
             try:
@@ -48,7 +67,7 @@ def register_broadcast_command(app: Client, db, ADMIN_IDS):
                         # Enhanced photo caption
                         caption = content if content else (media_message.caption if media_message.caption else "✨ IP Finder Bot Update")
                         if pin_message:
-                            caption += "\n\n📌 This is an important pinned message"
+                            caption += "\n\n📌 <b>Tʜɪꜱ ɪꜱ ᴀɴ ɪᴍᴘᴏʀᴛᴀɴᴛ ᴘɪɴɴᴇᴅ ᴍᴇꜱꜱᴀɢᴇ</b>"
                         
                         sent_message = await client.send_photo(
                             user_id, 
@@ -70,7 +89,7 @@ def register_broadcast_command(app: Client, db, ADMIN_IDS):
                         # Enhanced document caption
                         caption = content if content else (media_message.caption if media_message.caption else "📁 Important Document")
                         if pin_message:
-                            caption += "\n\n📌 This is an important pinned message"
+                            caption += "\n\n📌 <b>Tʜɪꜱ ɪꜱ ᴀɴ ɪᴍᴘᴏʀᴛᴀɴᴛ ᴘɪɴɴᴇᴅ ᴍᴇꜱꜱᴀɢᴇ</b>"
                         
                         sent_message = await client.send_document(
                             user_id, 
@@ -90,13 +109,18 @@ def register_broadcast_command(app: Client, db, ADMIN_IDS):
                 else:
                     # Handle text broadcast
                     # Enhanced text message format
-                    formatted_text = f"""✨ <b>Announcement</b> ✨\n\n{content}\n\n"""
+                    formatted_text = (
+                        "✨ <b>Aɴɴᴏᴜɴᴄᴇᴍᴇɴᴛ</b> ✨\n\n"
+                        f"<blockquote>{content}</blockquote>\n\n"
+                    )
                     if pin_message:
-                        formatted_text += "📌 <b>IMPORTANT PINNED MESSAGE</b>\n\n"
-                    if not content.endswith(('🌐', '📢', '🔔', '📣', '📩')):
-                        formatted_text += "━━━━━━━━━━━━━━\n"
-                        formatted_text += "💌 Thank you for using IP Finder Bot!\n"
-                        formatted_text += "🔔 Stay tuned for more updates."
+                        formatted_text += "📌 <b>Iᴍᴘᴏʀᴛᴀɴᴛ Pɪɴɴᴇᴅ Mᴇꜱꜱᴀɢᴇ</b>\n\n"
+                    
+                    formatted_text += (
+                        "━━━━━━━━━━━━━━\n"
+                        "💌 Tʜᴀɴᴋ ʏᴏᴜ ꜰᴏʀ ᴜꜱɪɴɢ IP Finder Bot!\n"
+                        "🔔 Sᴛᴀʏ ᴛᴜɴᴇᴅ ꜰᴏʀ ᴍᴏʀᴇ ᴜᴘᴅᴀᴛᴇꜱ."
+                    )
                     
                     sent_message = await client.send_message(user_id, formatted_text, parse_mode=enums.ParseMode.HTML)
                     
@@ -119,15 +143,19 @@ def register_broadcast_command(app: Client, db, ADMIN_IDS):
                 progress_bar = '█' * (progress // 10) + '░' * (10 - progress // 10)
                 
                 try:
-                    await progress_msg.edit_text(
-                        f"""📨 <b>Broadcast Progress</b> ({broadcast_type})
-                        
-📊 Total Recipients: <code>{len(users)}</code>
-✅ Successful: <code>{success}</code>
-❌ Failed: <code>{failed}</code>
-⏳ Status: <i>Sending...</i>
+                    progress_text = (
+                        f"<b>📨 Bʀᴏᴀᴅᴄᴀꜱᴛ Pʀᴏɢʀᴇꜱꜱ</b> ({broadcast_type})\n\n"
+                        "<blockquote>"
+                        f"📊 <b>Tᴏᴛᴀʟ Rᴇᴄɪᴘɪᴇɴᴛꜱ:</b> <code>{len(users)}</code>\n"
+                        f"✅ <b>Sᴜᴄᴄᴇꜱꜱꜰᴜʟ:</b> <code>{success}</code>\n"
+                        f"❌ <b>Fᴀɪʟᴇᴅ:</b> <code>{failed}</code>\n"
+                        f"⏳ <b>Sᴛᴀᴛᴜꜱ:</b> Sᴇɴᴅɪɴɢ...\n"
+                        f"📈 <b>Pʀᴏɢʀᴇꜱꜱ:</b> [{progress_bar}] {progress}%"
+                        "</blockquote>"
+                    )
 
-[{progress_bar}] {progress}%""",
+                    await progress_msg.edit_text(
+                        progress_text,
                         parse_mode=enums.ParseMode.HTML
                     )
                 except Exception as e:
@@ -137,30 +165,39 @@ def register_broadcast_command(app: Client, db, ADMIN_IDS):
         
         # Enhanced completion message
         if pin_message:
-            completion_text = f"""📣 <b>Pinned Broadcast Completed!</b>
-            
-📊 <b>Statistics:</b>
-├ 📤 <i>Sent:</i> <code>{success}</code>
-└ ❌ <i>Failed:</i> <code>{failed}</code>
-
-💡 <b>Note:</b> Bots cannot pin messages in private chats. 
-   The messages were marked as "important" instead.
-
-⏱️ <i>Finished at:</i> <code>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</code>
-
-✨ <i>Thank you for using our broadcast system!</i>"""
+            completion_text = (
+                "<b>📣 Pɪɴɴᴇᴅ Bʀᴏᴀᴅᴄᴀꜱᴛ Cᴏᴍᴘʟᴇᴛᴇᴅ!</b>\n\n"
+                "<blockquote>"
+                f"📊 <b>Sᴛᴀᴛɪꜱᴛɪᴄꜱ:</b>\n"
+                f"├ 📤 <b>Sᴇɴᴛ:</b> <code>{success}</code>\n"
+                f"└ ❌ <b>Fᴀɪʟᴇᴅ:</b> <code>{failed}</code>\n\n"
+                f"💡 <b>Nᴏᴛᴇ:</b> Bᴏᴛꜱ ᴄᴀɴɴᴏᴛ ᴘɪɴ ᴍᴇꜱꜱᴀɢᴇꜱ ɪɴ ᴘʀɪᴠᴀᴛᴇ ᴄʜᴀᴛꜱ.\n"
+                f"   Tʜᴇ ᴍᴇꜱꜱᴀɢᴇꜱ ᴡᴇʀᴇ ᴍᴀʀᴋᴇᴅ ᴀꜱ 'ɪᴍᴘᴏʀᴛᴀɴᴛ' ɪɴꜱᴛᴇᴀᴅ.\n\n"
+                f"⏱️ <b>Fɪɴɪꜱʜᴇᴅ ᴀᴛ:</b> <code>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</code>\n\n"
+                f"✨ Tʜᴀɴᴋ ʏᴏᴜ ꜰᴏʀ ᴜꜱɪɴɢ ᴏᴜʀ ʙʀᴏᴀᴅᴄᴀꜱᴛ ꜱʏꜱᴛᴇᴍ!"
+                "</blockquote>"
+            )
         else:
-            completion_text = f"""📣 <b>Broadcast Completed Successfully!</b>
-            
-📊 <b>Statistics:</b>
-├ 📤 <i>Sent:</i> <code>{success}</code>
-└ ❌ <i>Failed:</i> <code>{failed}</code>
-
-⏱️ <i>Finished at:</i> <code>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</code>
-
-✨ <i>Thank you for using our broadcast system!</i>"""
+            completion_text = (
+                "<b>📣 Bʀᴏᴀᴅᴄᴀꜱᴛ Cᴏᴍᴘʟᴇᴛᴇᴅ Sᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ!</b>\n\n"
+                "<blockquote>"
+                f"📊 <b>Sᴛᴀᴛɪꜱᴛɪᴄꜱ:</b>\n"
+                f"├ 📤 <b>Sᴇɴᴛ:</b> <code>{success}</code>\n"
+                f"└ ❌ <b>Fᴀɪʟᴇᴅ:</b> <code>{failed}</code>\n\n"
+                f"⏱️ <b>Fɪɴɪꜱʜᴇᴅ ᴀᴛ:</b> <code>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</code>\n\n"
+                f"✨ Tʜᴀɴᴋ ʏᴏᴜ ꜰᴏʀ ᴜꜱɪɴɢ ᴏᴜʀ ʙʀᴏᴀᴅᴄᴀꜱᴛ ꜱʏꜱᴛᴇᴍ!"
+                "</blockquote>"
+            )
         
-        await original_message.reply_text(completion_text, parse_mode=enums.ParseMode.HTML)
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_broadcast")]
+        ])
+
+        await original_message.reply_text(
+            completion_text,
+            reply_markup=keyboard,
+            parse_mode=enums.ParseMode.HTML
+        )
         
         # Delete progress message
         try:
@@ -173,21 +210,46 @@ def register_broadcast_command(app: Client, db, ADMIN_IDS):
     async def broadcast_command(client: Client, message: Message):
         """Normal broadcast command"""
         if len(message.command) == 1:
+            help_text = (
+                "<b>📢 Nᴏʀᴍᴀʟ Bʀᴏᴀᴅᴄᴀꜱᴛ</b>\n\n"
+                "<blockquote>"
+                "<b>Uꜱᴀɢᴇ:</b> /broadcast [message]\n\n"
+                "<b>Exᴀᴍᴘʟᴇ:</b>\n"
+                "/broadcast Hello everyone! This is a test message.\n\n"
+                "Tʜɪꜱ ᴡɪʟʟ ꜱᴇɴᴅ ᴀ ʀᴇɢᴜʟᴀʀ ᴍᴇꜱꜱᴀɢᴇ ᴛᴏ ᴀʟʟ ᴜꜱᴇʀꜱ."
+                "</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_broadcast")]
+            ])
+            
             await message.reply_text(
-                "📢 <b>Normal Broadcast</b>\n\n"
-                "Usage: /broadcast [message]\n\n"
-                "Example: /broadcast Hello everyone! This is a test message.\n\n"
-                "This will send a regular message to all users.",
+                help_text,
+                reply_markup=keyboard,
                 parse_mode=enums.ParseMode.HTML
             )
             return
         
         # Check if this is a media message (photo/document)
         if message.photo or message.document:
+            error_text = (
+                "<b>❌ Mᴇᴅɪᴀ Bʀᴏᴀᴅᴄᴀꜱᴛ Eʀʀᴏʀ</b>\n\n"
+                "<blockquote>"
+                "Fᴏʀ ᴍᴇᴅɪᴀ ʙʀᴏᴀᴅᴄᴀꜱᴛꜱ, ᴘʟᴇᴀꜱᴇ ᴜꜱᴇ:\n"
+                "• /bcmedia [caption] - ꜰᴏʀ ɴᴏʀᴍᴀʟ ᴍᴇᴅɪᴀ ʙʀᴏᴀᴅᴄᴀꜱᴛ\n\n"
+                "Rᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇᴅɪᴀ ᴍᴇꜱꜱᴀɢᴇ ᴡɪᴛʜ ᴛʜɪꜱ ᴄᴏᴍᴍᴀɴᴅ."
+                "</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_broadcast")]
+            ])
+            
             await message.reply_text(
-                "❌ For media broadcasts, please use:\n"
-                "• /bcmedia [caption] - for normal media broadcast\n\n"
-                "Reply to a media message with this command."
+                error_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
             )
             return
         
@@ -199,22 +261,47 @@ def register_broadcast_command(app: Client, db, ADMIN_IDS):
     async def pinned_broadcast_command(client: Client, message: Message):
         """Pinned broadcast command"""
         if len(message.command) == 1:
+            help_text = (
+                "<b>📌 Iᴍᴘᴏʀᴛᴀɴᴛ Bʀᴏᴀᴅᴄᴀꜱᴛ</b>\n\n"
+                "<blockquote>"
+                "<b>Uꜱᴀɢᴇ:</b> /pinm [message]\n\n"
+                "<b>Exᴀᴍᴘʟᴇ:</b>\n"
+                "/pinm Important announcement! Please read.\n\n"
+                "Tʜɪꜱ ᴡɪʟʟ ꜱᴇɴᴅ ᴀɴ ɪᴍᴘᴏʀᴛᴀɴᴛ ᴍᴇꜱꜱᴀɢᴇ ᴛᴏ ᴀʟʟ ᴜꜱᴇʀꜱ.\n"
+                "💡 <b>Nᴏᴛᴇ:</b> Bᴏᴛꜱ ᴄᴀɴɴᴏᴛ ᴘɪɴ ᴍᴇꜱꜱᴀɢᴇꜱ ɪɴ ᴘʀɪᴠᴀᴛᴇ ᴄʜᴀᴛꜱ."
+                "</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_broadcast")]
+            ])
+            
             await message.reply_text(
-                "📌 <b>Important Broadcast</b>\n\n"
-                "Usage: /pinm [message]\n\n"
-                "Example: /pinm Important announcement! Please read.\n\n"
-                "This will send an important message to all users.\n"
-                "💡 <b>Note:</b> Bots cannot pin messages in private chats.",
+                help_text,
+                reply_markup=keyboard,
                 parse_mode=enums.ParseMode.HTML
             )
             return
         
         # Check if this is a media message (photo/document)
         if message.photo or message.document:
+            error_text = (
+                "<b>❌ Mᴇᴅɪᴀ Bʀᴏᴀᴅᴄᴀꜱᴛ Eʀʀᴏʀ</b>\n\n"
+                "<blockquote>"
+                "Fᴏʀ ᴍᴇᴅɪᴀ ʙʀᴏᴀᴅᴄᴀꜱᴛꜱ, ᴘʟᴇᴀꜱᴇ ᴜꜱᴇ:\n"
+                "• /pinmedia [caption] - ꜰᴏʀ ɪᴍᴘᴏʀᴛᴀɴᴛ ᴍᴇᴅɪᴀ ʙʀᴏᴀᴅᴄᴀꜱᴛ\n\n"
+                "Rᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇᴅɪᴀ ᴍᴇꜱꜱᴀɢᴇ ᴡɪᴛʜ ᴛʜɪꜱ ᴄᴏᴍᴍᴀɴᴅ."
+                "</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_broadcast")]
+            ])
+            
             await message.reply_text(
-                "❌ For media broadcasts, please use:\n"
-                "• /pinmedia [caption] - for important media broadcast\n\n"
-                "Reply to a media message with this command."
+                error_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
             )
             return
         
@@ -226,16 +313,42 @@ def register_broadcast_command(app: Client, db, ADMIN_IDS):
     async def media_broadcast_command(client: Client, message: Message):
         """Media broadcast command (reply to a media message)"""
         if not message.reply_to_message:
+            help_text = (
+                "<b>🖼️ Mᴇᴅɪᴀ Bʀᴏᴀᴅᴄᴀꜱᴛ</b>\n\n"
+                "<blockquote>"
+                "<b>Uꜱᴀɢᴇ:</b> Rᴇᴘʟʏ ᴛᴏ ᴀ ᴘʜᴏᴛᴏ ᴏʀ ᴅᴏᴄᴜᴍᴇɴᴛ ᴡɪᴛʜ /bcmedia [caption]\n\n"
+                "Tʜɪꜱ ᴡɪʟʟ ʙʀᴏᴀᴅᴄᴀꜱᴛ ᴛʜᴇ ᴍᴇᴅɪᴀ ᴛᴏ ᴀʟʟ ᴜꜱᴇʀꜱ ᴡɪᴛʜ ʏᴏᴜʀ ᴄᴀᴘᴛɪᴏɴ."
+                "</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_broadcast")]
+            ])
+            
             await message.reply_text(
-                "🖼️ <b>Media Broadcast</b>\n\n"
-                "Usage: Reply to a photo or document with /bcmedia [caption]\n\n"
-                "This will broadcast the media to all users with your caption.",
+                help_text,
+                reply_markup=keyboard,
                 parse_mode=enums.ParseMode.HTML
             )
             return
         
         if not (message.reply_to_message.photo or message.reply_to_message.document):
-            await message.reply_text("❌ Please reply to a photo or document.")
+            error_text = (
+                "<b>❌ Iɴᴠᴀʟɪᴅ Mᴇᴅɪᴀ</b>\n\n"
+                "<blockquote>"
+                "Pʟᴇᴀꜱᴇ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴘʜᴏᴛᴏ ᴏʀ ᴅᴏᴄᴜᴍᴇɴᴛ ᴍᴇꜱꜱᴀɢᴇ."
+                "</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_broadcast")]
+            ])
+            
+            await message.reply_text(
+                error_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
+            )
             return
         
         # Get caption from command
@@ -248,20 +361,52 @@ def register_broadcast_command(app: Client, db, ADMIN_IDS):
     async def pinned_media_broadcast_command(client: Client, message: Message):
         """Pinned media broadcast command (reply to a media message)"""
         if not message.reply_to_message:
+            help_text = (
+                "<b>📌 Iᴍᴘᴏʀᴛᴀɴᴛ Mᴇᴅɪᴀ Bʀᴏᴀᴅᴄᴀꜱᴛ</b>\n\n"
+                "<blockquote>"
+                "<b>Uꜱᴀɢᴇ:</b> Rᴇᴘʟʏ ᴛᴏ ᴀ ᴘʜᴏᴛᴏ ᴏʀ ᴅᴏᴄᴜᴍᴇɴᴛ ᴡɪᴛʜ /pinmedia [caption]\n\n"
+                "Tʜɪꜱ ᴡɪʟʟ ʙʀᴏᴀᴅᴄᴀꜱᴛ ɪᴍᴘᴏʀᴛᴀɴᴛ ᴍᴇᴅɪᴀ ᴛᴏ ᴀʟʟ ᴜꜱᴇʀꜱ.\n"
+                "💡 <b>Nᴏᴛᴇ:</b> Bᴏᴛꜱ ᴄᴀɴɴᴏᴛ ᴘɪɴ ᴍᴇꜱꜱᴀɢᴇꜱ ɪɴ ᴘʀɪᴠᴀᴛᴇ ᴄʜᴀᴛꜱ."
+                "</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_broadcast")]
+            ])
+            
             await message.reply_text(
-                "📌 <b>Important Media Broadcast</b>\n\n"
-                "Usage: Reply to a photo or document with /pinmedia [caption]\n\n"
-                "This will broadcast important media to all users.\n"
-                "💡 <b>Note:</b> Bots cannot pin messages in private chats.",
+                help_text,
+                reply_markup=keyboard,
                 parse_mode=enums.ParseMode.HTML
             )
             return
         
         if not (message.reply_to_message.photo or message.reply_to_message.document):
-            await message.reply_text("❌ Please reply to a photo or document.")
+            error_text = (
+                "<b>❌ Iɴᴠᴀʟɪᴅ Mᴇᴅɪᴀ</b>\n\n"
+                "<blockquote>"
+                "Pʟᴇᴀꜱᴇ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴘʜᴏᴛᴏ ᴏʀ ᴅᴏᴄᴜᴍᴇɴᴛ ᴍᴇꜱꜱᴀɢᴇ."
+                "</blockquote>"
+            )
+            
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_broadcast")]
+            ])
+            
+            await message.reply_text(
+                error_text,
+                reply_markup=keyboard,
+                parse_mode=enums.ParseMode.HTML
+            )
             return
         
         # Get caption from command
         caption = message.text.split(" ", 1)[1] if len(message.command) > 1 else ""
         
         await process_broadcast(client, message, caption, pin_message=True, media_message=message.reply_to_message)
+
+    # Close button handler
+    @app.on_callback_query(filters.regex("close_broadcast"))
+    async def close_broadcast(client, callback_query):
+        await callback_query.message.delete()
+        await callback_query.answer("Bʀᴏᴀᴅᴄᴀꜱᴛ ɪɴꜰᴏ ᴄʟᴏꜱᴇᴅ")
