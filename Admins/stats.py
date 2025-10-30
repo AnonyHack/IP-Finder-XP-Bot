@@ -26,7 +26,7 @@ def register_stats_handler(app: Client):
             return
 
         # Send loading message and show main dashboard
-        sent_message = await message.reply_text("📊 Loading statistics...")
+        sent_message = await message.reply_text("⟲ ʟᴏᴀᴅɪɴɢ ꜱᴛᴀᴛɪꜱᴛɪᴄꜱ...")
         await show_main_dashboard(client, sent_message)
 
     async def show_main_dashboard(client, message):
@@ -55,28 +55,28 @@ def register_stats_handler(app: Client):
 
         # Main dashboard text with stylish formatting
         text = (
-            "⍟─────[ ʙᴏᴛ sᴛᴀᴛɪsᴛɪᴄs ]─────⍟\n\n"
+            "⍟─────[ ʙᴏᴛ ꜱᴛᴀᴛꜱ ]─────⍟\n\n"
             "<blockquote>"
             f"‣ ʙᴏᴛ ᴜᴘᴛɪᴍᴇ: {uptime} ⏱️\n"
             f"‣ ᴘɪɴɢ (ɢᴏᴏɢʟᴇ): {ping_ms} ms 🌐\n\n"
             
-            f"👥 ᴜsᴇʀ sᴛᴀᴛɪsᴛɪᴄs:\n"
+            f"👥 ᴜsᴇʀ ꜱᴛᴀᴛꜱ:\n"
             f"‣ ᴛᴏᴛᴀʟ ᴜsᴇʀs: {total_users} 👤\n"
             f"‣ ᴛᴏᴅᴀʏ's ᴊᴏɪɴs: {today_joins} 🆕\n"
             f"‣ 7-ᴅᴀʏ ᴊᴏɪɴs: {last_7d_joins} 📅\n"
-            f"‣ 30-ᴅᴀʏ ᴊᴏɪɴs: {last_30d_joins} 🗓️\n"
+            f"‣ 30-ᴅᴀʏ ᴊᴏɪɴs: {last_30d_joins} 🗓️\n\n"
             "</blockquote>"
-            "⍟─────────────────────────⍟"
+            "⍟──────────────────⍟"
         )
 
         # Navigation buttons
         keyboard = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("🔍 Searches", callback_data="stats_searches"),
-                InlineKeyboardButton("💰 Payments", callback_data="stats_payments")
+                InlineKeyboardButton("🔍 ꜱᴇᴀʀᴄʜᴇꜱ", callback_data="stats_searches"),
+                InlineKeyboardButton("💰 ᴘᴀʏᴍᴇɴᴛꜱ", callback_data="stats_payments")
             ],
             [
-                InlineKeyboardButton("🎁 Gifts", callback_data="stats_gifts"),
+                InlineKeyboardButton("🎁 ɢɪꜰᴛꜱ", callback_data="stats_gifts"),
                 InlineKeyboardButton("⌧ ᴄʟᴏꜱᴇ ⌧", callback_data="close_stats")
             ]
         ])
@@ -104,7 +104,7 @@ def register_stats_handler(app: Client):
         })
 
         text = (
-            "⍟─────[ sᴇᴀʀᴄʜ sᴛᴀᴛɪsᴛɪᴄs ]─────⍟\n\n"
+            "⍟────[ sᴇᴀʀᴄʜ ꜱᴛᴀᴛꜱ ]────⍟\n\n"
             "<blockquote>"
             f"🔍 ᴛᴏᴅᴀʏ's sᴇᴀʀᴄʜᴇs:\n"
             f"‣ ᴛᴏᴛᴀʟ: {today_searches} 📊\n"
@@ -113,9 +113,9 @@ def register_stats_handler(app: Client):
             
             f"📈 sᴇᴀʀᴄʜ ᴏᴠᴇʀᴠɪᴇᴡ:\n"
             f"‣ ᴘʀɪᴠᴀᴛᴇ ʀᴀᴛᴇ: {round((private_searches/today_searches)*100, 2) if today_searches > 0 else 0}%\n"
-            f"‣ ɪɴʟɪɴᴇ ʀᴀᴛᴇ: {round((inline_searches/today_searches)*100, 2) if today_searches > 0 else 0}%"
+            f"‣ ɪɴʟɪɴᴇ ʀᴀᴛᴇ: {round((inline_searches/today_searches)*100, 2) if today_searches > 0 else 0}%\n\n"
             "</blockquote>"
-            "⍟─────────────────────────⍟"
+            "⍟────────────────────⍟"
         )
 
         keyboard = InlineKeyboardMarkup([
@@ -158,7 +158,7 @@ def register_stats_handler(app: Client):
         last_30d_revenue_val = last_30d_revenue_cursor[0]["sum"] if last_30d_revenue_cursor else 0
 
         text = (
-            "⍟─────[ ᴘᴀʏᴍᴇɴᴛ sᴛᴀᴛɪsᴛɪᴄs ]─────⍟\n\n"
+            "⍟────[ ᴘᴀʏᴍᴇɴᴛ ꜱᴛᴀᴛꜱ ]────⍟\n\n"
             "<blockquote>"
             f"💰 ᴘᴀʏᴍᴇɴᴛ ᴏᴠᴇʀᴠɪᴇᴡ:\n"
             f"‣ ᴛᴏᴛᴀʟ ᴘᴀʏᴍᴇɴᴛs: {total_payments} 💳\n"
@@ -170,9 +170,9 @@ def register_stats_handler(app: Client):
             f"‣ 30-ᴅᴀʏs: {last_30d_payments} | {last_30d_revenue_val} ⭐️\n\n"
             
             f"📈 ᴀᴠᴇʀᴀɢᴇ ʀᴇᴠᴇɴᴜᴇ:\n"
-            f"‣ ᴘᴇʀ ᴘᴀʏᴍᴇɴᴛ: {round(total_revenue_val/total_payments, 2) if total_payments > 0 else 0} ⭐️"
+            f"‣ ᴘᴇʀ ᴘᴀʏᴍᴇɴᴛ: {round(total_revenue_val/total_payments, 2) if total_payments > 0 else 0} ⭐️\n\n"
             "</blockquote>"
-            "⍟─────────────────────────⍟"
+            "⍟──────────────────⍟"
         )
 
         keyboard = InlineKeyboardMarkup([
@@ -189,7 +189,7 @@ def register_stats_handler(app: Client):
         active_gift_codes = total_gift_codes - used_gift_codes
 
         text = (
-            "⍟─────[ ɢɪғᴛ ᴄᴏᴅᴇ sᴛᴀᴛɪsᴛɪᴄs ]─────⍟\n\n"
+            "⍟────[ ɢɪғᴛ ᴄᴏᴅᴇ ꜱᴛᴀᴛꜱ ]────⍟\n\n"
             "<blockquote>"
             f"🎁 ɢɪғᴛ ᴄᴏᴅᴇs ᴏᴠᴇʀᴠɪᴇᴡ:\n"
             f"‣ ᴛᴏᴛᴀʟ ᴄᴏᴅᴇs: {total_gift_codes} 🎫\n"
@@ -198,9 +198,9 @@ def register_stats_handler(app: Client):
             
             f"📊 ᴜsᴀɢᴇ sᴛᴀᴛs:\n"
             f"‣ ᴜsᴀɢᴇ ʀᴀᴛᴇ: {round((used_gift_codes/total_gift_codes)*100, 2) if total_gift_codes > 0 else 0}%\n"
-            f"‣ ᴀᴠᴀɪʟᴀʙʟᴇ: {round((active_gift_codes/total_gift_codes)*100, 2) if total_gift_codes > 0 else 0}%"
+            f"‣ ᴀᴠᴀɪʟᴀʙʟᴇ: {round((active_gift_codes/total_gift_codes)*100, 2) if total_gift_codes > 0 else 0}%\n\n"
             "</blockquote>"
-            "⍟─────────────────────────⍟"
+            "⍟────────────────────⍟"
         )
 
         keyboard = InlineKeyboardMarkup([
