@@ -253,11 +253,11 @@ def run_health_server():
     """Run a simple HTTP server to respond to health checks and display bot info."""
     try:
         port = getattr(con, 'PORT', 10000)
-        server = HTTPServer(('0.0.0.0', port), HealthHandler)
+        server = HTTPServer(('localhost', port), HealthHandler)
         # Use simple messages without emojis to avoid encoding issues
         logger.info(f"Health server started successfully on port {port}")
-        logger.info(f"IP Tracker Bot status page: http://0.0.0.0:{port}/")
-        logger.info(f"Health check endpoint: http://0.0.0.0:{port}/health")
+        logger.info(f"IP Tracker Bot status page: http://localhost:{port}/")
+        logger.info(f"Health check endpoint: http://localhost:{port}/health")
         server.serve_forever()
     except Exception as e:
         logger.error(f"Failed to start health server: {e}")
