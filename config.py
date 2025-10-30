@@ -14,7 +14,7 @@ class config:
     BOT_TOKEN = getenv("BOT_TOKEN", "")
     IP_API = getenv("ACCESS_TOKEN", "") # get your free token from ipgeolocation.io
     MONGO_URI = getenv("MONGO_URI", "")
-    MONGO_DB = getenv("MONGO_DB", "ipfinderxpbot")
+    MONGO_DB = getenv("MONGO_DB", "ipfinderbot")
     USERS_COLLECTION = getenv("USERS_COLLECTION", "users")
 
     # --- ADMIN_USER_IDS: list of ints, works with or without quotes, ignores spaces ---
