@@ -7,7 +7,7 @@ import time
 import requests
 
 # MongoDB setup
-mongo_client = pymongo.MongoClient(config.con.MONGODB_URI)
+mongo_client = pymongo.MongoClient(config.con.MONGO_URI)
 db = mongo_client[config.con.MONGO_DB]
 users_collection = db[config.con.USERS_COLLECTION]
 search_logs = db["search_logs"]
@@ -230,4 +230,3 @@ def register_stats_handler(app: Client):
     async def close_stats(client, callback_query):
         await callback_query.message.delete()
         await callback_query.answer("Statistics closed")
-
